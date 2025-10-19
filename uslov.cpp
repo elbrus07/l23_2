@@ -170,6 +170,6 @@ int main(){
   res = ten_thousands * 10000 + thousands * 1000 + hundreds * 100 + tens * 10 + units;
   std::cout << "Результат: " << res << std::endl;
   */
-  
+   
   return 0;
 }
