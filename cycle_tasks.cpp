@@ -53,8 +53,12 @@ int main() {
                 int n = temp;
                 while (n > 0) {
                     int digit = n % 10;
-                    if (digit > maxDigit) maxDigit = digit;
-                    if (digit < minDigit) minDigit = digit;
+                    if (digit > maxDigit) {
+	                    maxDigit = digit;
+	                }
+                    if (digit < minDigit){
+                    	minDigit = digit;
+                    }
                     n /= 10;
                 }
                 cout << "Максимальная цифра: " << maxDigit << endl;
