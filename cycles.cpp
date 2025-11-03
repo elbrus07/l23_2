@@ -20,8 +20,12 @@ int main(){
     for (; copia > 0; copia /= 10)
     {
         int digit = copia % 10;
-        if (digit > max_cifr) max_cifr = digit;
-        if (digit < min_cifr) min_cifr = digit;
+        if (digit > max_cifr){
+            max_cifr = digit;
+        }
+        if (digit < min_cifr) {
+            min_cifr = digit;
+        }
     }
     int product = max_cifr * min_cifr ;
     std::cout<<"максимальная цифра"<< max_cifr << endl ;
@@ -36,8 +40,12 @@ int main(){
     while (copia > 0)
     {
         int digit = copia % 10;
-        if (digit > max_cifr) max_cifr = digit;
-        if (digit < min_cifr) min_cifr = digit;
+        if (digit > max_cifr) {
+            max_cifr = digit;
+        }
+        if (digit < min_cifr) {
+            min_cifr = digit;
+        }
         copia /= 10;
     }
      product = max_cifr * min_cifr ;
@@ -53,8 +61,12 @@ int main(){
 
     do {
             int digit = copia % 10;
-            if (digit > max_cifr) max_cifr = digit;
-            if (digit < min_cifr) min_cifr = digit;
+            if (digit > max_cifr) {
+                max_cifr = digit;
+            }
+            if (digit < min_cifr) {
+                min_cifr = digit;
+            }
             copia /= 10;
     } while (copia > 0);
     product = max_cifr * min_cifr ;
@@ -214,4 +226,5 @@ int main(){
 
 //5.Вывести на экран двумерную таблицу умножения. 
     return 0;
+
 }
