@@ -88,9 +88,9 @@ int main(){
         if (num == 0)
         {
             break;
-        } else {
-            sum += num;
-        }  
+        }
+        sum += num;
+          
     }
     std:: cout << "Сумма: " << sum << endl;
 
@@ -116,7 +116,7 @@ int main(){
 */
 
 //3. Дано целое число. Удалить из него заданную цифру. Например, если задано 1464235 и цифра 4, то должно получиться 16235.
-/*    
+   
     int num, digit_to_remove;
     std::cout << "Введите число: ";
     std::cin >> num;
@@ -135,7 +135,8 @@ int main(){
         if (current_digit != digit_to_remove)
         {
             result += current_digit * multiplier;
-            multiplier *= 10;
+			multiplier *= 10;
+            
         }
         
     }
@@ -176,7 +177,6 @@ int main(){
     } while (copia > 0);
     if (num < 0) result = -result;
     cout << "Результат: " << result << endl;
-*/
 
 //4.Для каждого натурального числа в промежутке от N до M вывести все делители, кроме единицы и самого числа. Значения N и M вводятся с клавиатуры. 
 /*
@@ -193,7 +193,7 @@ int main(){
         cout << "Делители " << i << ": ";
         bool has_divisors = false;
         
-        for (int j = 2; j <= i/2; j++) { // i/2   Потому что делитель не может быть больше половины числа кроме самого числа
+        for (int j = 2; j <= pow(i,0.5); j++) { // i/2   Потому что делитель не может быть больше половины числа кроме самого числа
             if (i % j == 0) {
                 cout << j << " ";
                 has_divisors = true;
