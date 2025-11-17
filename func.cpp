@@ -165,7 +165,38 @@ string compress (string str) {
 }
 
 //3. Для двух строк напишите метод, определяющий, является ли одна строка перестановкой другой
-
+    bool isPermutationManual(string str1, string str2) {
+    // Проверяем длины
+    if (str1.length() != str2.length()) {
+        return false;
+    }
+    
+    // массив для подсчета 
+    int count[128];
+    
+    // обнуляем массив
+    for (int i = 0; i < 128; i++) {
+        count[i] = 0;
+    }
+    
+    // считаем символы первой строки
+    for (int i = 0; i < str1.length(); i++) {
+        char c = str1[i];
+        count[c] = count[c] + 1;
+    }
+    
+    // проверяем вторую строку
+    for (int i = 0; i < str2.length(); i++) {
+        char c = str2[i];
+        count[c] = count[c] - 1;
+        
+        if (count[c] < 0) {
+            return false;
+        }
+    }
+    
+    return true;
+}
 
 
 
@@ -184,5 +215,12 @@ int main() {
     cout << transform(19) << endl;    // девятнадцать
     cout << transform(0) << endl;     // ноль
     return 0;
-
+//3
+    string test1a = "abc", test1b = "cba";
+    if (isPermutationManual(test1a, test1b)) {
+        cout << "abc и cba: ЯВЛЯЮТСЯ перестановками" << endl;
+    } else {
+        cout << "abc и cba: НЕ являются перестановками" << endl;
+    }
 }
+
