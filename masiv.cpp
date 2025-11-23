@@ -108,7 +108,115 @@ int main(){
 */
 
 //5.Дан массив и число p. Найти два различных числа в массиве, сумма которых наиболее близка к p.
-	
+/*    
+    srand(time(0));
+    
+    int n, p, num1, num2;
+    cout << "Введите размер массива: ";
+    cin >> n;
+    cout << "Введите число p: ";
+    cin >> p;
+    
+    int massiv[n];
+
+    for (int i = 0; i < n; i++) {
+        massiv[i] = rand() % 100;
+    }
+
+    int minDiff = INT_MAX; 
+
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            int sum = massiv[i] + massiv[j];
+            int diff = abs(sum - p);  
+            
+            if (diff < minDiff) {
+                minDiff = diff;
+                num1 = massiv[i];
+                num2 = massiv[j];
+            }
+        }
+    cout << "Найденная пара: " << num1 << " и " << num2 << endl;
+    cout << "Их сумма: " << num1 + num2 << endl;
+*/
+
+//6.Дан массив чисел. Заменить каждый элемент с чётным индексом на соседний слева элемент.
+/*
+    srand(time(0));
+    
+    int n;
+    cout << "Введите размер массива: ";
+    cin >> n;
+
+    int massiv[n];
+
+    cout << "Исходный массив: " ;
+    for (int i = 0; i < n; i++) {
+        massiv[i] = rand() % 100;
+        cout << massiv[i] << " "<< endl;
+    }
+
+    for(int i = 0; i < n; i++){
+
+        if (i % 2 == 0) {
+            if ( i> 0) {
+                massiv[i] = massiv[i - 1];
+            }   
+        }
+		
+	}
+    cout << "Результат: ";
+    for (int i = 0; i < n; i++) {
+        cout << massiv[i] << " ";
+    }
+*/
+
+//7.Дан массив. Поменять местами наибольший и наименьший элементы массива.
+/*
+    srand(time(0));
+    
+    int n;
+    cout << "Введите размер массива: ";
+    cin >> n;
+
+    int massiv[n];
+
+    cout << "Исходный массив: " ;
+    for (int i = 0; i < n; i++) {
+        massiv[i] = rand() % 100;
+        cout << massiv[i] << " "<< endl;
+    }
+
+    int max_cifr =  massiv[0];
+    int min_cifr = massiv[0];
+    int maxi = 0;
+    int mini = 0;
+
+    for(int i = 0; i < n; i++){
+
+
+       if (massiv[i] > max_cifr) {  
+            max_cifr = massiv[i];
+            maxi = i;
+        }
+        if (massiv[i] < min_cifr) { 
+            min_cifr = massiv[i];
+            mini = i;
+        }
+
+	}
+
+    massiv[maxi] = min_cifr;
+    massiv[mini] = max_cifr;
+
+    cout << "Результат: ";
+    for (int i = 0; i < n; i++) {
+        cout << massiv[i] << " ";
+    }
+*/
+
+//8.Даны два массива. Сформировать третий массив, состоящий из тех элементов, которые присутствуют в обоих массивах
     return 0;
 
 }
+
