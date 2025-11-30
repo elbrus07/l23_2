@@ -216,7 +216,31 @@ int main(){
 */
 
 //8.Даны два массива. Сформировать третий массив, состоящий из тех элементов, которые присутствуют в обоих массивах
-    return 0;
+    /*
+    int massiv1[5] = {1,4,6,2,7};
+    int massiv2[5] = {8,5,3,2,7};
+    int massiv3[5] = {0};  
+    
+    int count = 0;  
+    
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            if (massiv1[i] == massiv2[j]) {
+                massiv3[count] = massiv1[i];  
+                count++;
+                break;
+            }
+        }
+    }
+    
+    cout << "общие элементы: ";
+    for (int i = 0; i < count; i++) {
+        cout << massiv3[i] << " ";
+    }
+    
+*/ 
+	return 0;
 
 }
+
 
