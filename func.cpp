@@ -18,16 +18,32 @@
 #include <iostream>
 #include <string>
 
-int compare(int a, int b){
-	if (a < b){
-		return a;
-	}else{
-		return b;
+int sort(int a[], int method){
+/*
+	method - метод сортировки:
+	1 - сортировка пузырьком
+	2 - сортировка вставками
+	3 - сортировка выбором
+*/
+	if (method == 1){
+		bubble_sort(a);
+		
+	}else if (method == 2){
+		insertion_sort(a);
+	}else if(method ==3){
+		selection_sort(a);
 	}
+	
 }
+
+
 
 int main(){
 
+	int a[3]{3,1,6};
+	
+	
+	
 	int a = 9;
 	int b = 8;
 	std::cout<< compare(a,b)<<"\n";
