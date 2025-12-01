@@ -33,16 +33,18 @@ int main(){
     cin >> a >> b;
     
     // Случайный размер от 5 до 15
-    int k = rand() % 11 + 5;
+    int k = rand() % (15 - 5) + 5;
     int massiv[k];
-    
+
     cout << "Создан массив из " << k << " элементов:" << endl;
     
     for(int i = 0; i < k; i++) {
         massiv[i] = rand() % (b - a + 1) + a;
         cout << massiv[i] << " ";
     }
+    cout<<"\n";
 */    
+    
 //3.    Заполнить массив случайным образом нулями и единицами так, чтобы количество единиц было в точности равно количеству нулей 
 /*    
     srand(time(0));
@@ -126,7 +128,7 @@ int main(){
     int minDiff = INT_MAX; 
 
     for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++) {
+        for (int j = i + 1; j < n-1; j++) {
             int sum = massiv[i] + massiv[j];
             int diff = abs(sum - p);  
             
@@ -156,13 +158,9 @@ int main(){
         cout << massiv[i] << " "<< endl;
     }
 
-    for(int i = 0; i < n; i++){
-
-        if (i % 2 == 0) {
-            if ( i> 0) {
-                massiv[i] = massiv[i - 1];
-            }   
-        }
+    for(int i = 2; i < n; i+=2){
+       massiv[i] = massiv[i - 1];
+    }
 		
 	}
     cout << "Результат: ";
