@@ -90,8 +90,8 @@ void zadanie4() {
 }
 
 int main() {
-    zadanie1();
-    // zadanie2();
+    //zadanie1();
+    zadanie2();
     // zadanie3();
     // zadanie4();
     
