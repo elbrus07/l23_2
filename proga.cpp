@@ -20,12 +20,13 @@ double triangle(double x1,double y1,double x2,double y2,double x3,double y3){
 int sovpad(int x, int mas[]){
     int n = 0;
     int i = 0;
-    int d = 500;
     while (mas[i]){ 
         if(x == mas[i])
             n++;
-        i++; }   
-    return n;}
+        i++; 
+    }   
+    return n;
+}
 
 //3. Написать функцию табуляции функции f(x) = (x - 1)**0.5 в точках x = 1,2,3,..., 12.
 double tabl(double start,double end,double step){
@@ -37,7 +38,7 @@ double tabl(double start,double end,double step){
 }
 
 //2. Написать функцию для сортировки массива методом пузырька.
-int sort(string sort, int arr[], int n){
+int[] sort(string sort, int arr[], int n){
     int new_arr[n];
     for(int i; i<n; i++){
         new_arr[i] = arr[i];
@@ -45,23 +46,33 @@ int sort(string sort, int arr[], int n){
 
 
     if(sort == "bubble"){
+    	
         for (int i = 0; i < n-1; i++){
             for(int j = 0; j < n-1-i; j++){
-                if(arr[j] > arr[j+1])
-                    arr[j], arr[j+1] = new_arr[j+1], new_arr[j]; 
+                if(arr[j] > arr[j+1]){
+                    int t  = arr[j];
+                    arr[j] = arr[j+1];
+                    arr[j+1] = t; 
+                   
                 }
             }
         }
-
-    for(int i = 0; i<n; i++){
-        cout<< new_arr[i];
-    }
-    return 0;
+	}
+     return arr;
 }
 
 
 int main(){
-    int r[6]{2,4,1,3,6,5};
-    sort("bubble", r, 6);
+	int n = 6;
+    int r[n]{2,4,1,3,6,5};
+    for(int i = 0; i<n; i++){
+        cout<< r[i];
+    }
+    int sorted[n] = sort("bubble", r, n);
+    cout << "\n";
+    for(int i = 0; i<n; i++){
+        cout<< r[i];
+    }    
+    cout << "\n";
     return 0;
 }
