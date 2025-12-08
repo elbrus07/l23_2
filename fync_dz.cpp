@@ -20,6 +20,7 @@ int perimetr() {
         int dy = y1 - y2;
         if (dy < 0) dy = -dy;
 
+		//	sqrt()	- возвращает квадратный корень
         int s = dx*dx + dy*dy;
         int r = 0;
         while (r*r <= s) r++;
@@ -115,3 +116,11 @@ int countMatch(int a[], int n, int x) {
         if (a[i] == x) c++;
     return c;
 }
+
+
+int main (){
+// ???
+}
+
+
+
