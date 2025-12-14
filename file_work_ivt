@@ -1,0 +1,147 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <sstream>
+#include <algorithm>
+
+using namespace std;
+
+struct Student {
+    string surname;
+    string name;
+    string patronymic;
+    string birthDate;
+    int group;
+    string recordBook;
+    int course;
+};
+
+// ======== ЗАПИСЬ СТУДЕНТА ==================
+void addStudent(const string& filename) {
+    ofstream file(filename, ios::app);
+    if (!file) {
+        cout << "Ошибка открытия файла!\n";
+        return;
+    }
+
+    Student s;
+    cout << "Фамилия: "; cin >> s.surname;
+    cout << "Имя: "; cin >> s.name;
+    cout << "Отчество: "; cin >> s.patronymic;
+    cout << "Дата рождения (YYYY-MM-DD): "; cin >> s.birthDate;
+    cout << "Группа: "; cin >> s.group;
+    cout << "№ зачетки: "; cin >> s.recordBook;
+    cout << "Курс: "; cin >> s.course;
+
+    file << s.surname << "#"
+         << s.name << "#"
+         << s.patronymic << "#"
+         << s.birthDate << "#"
+         << s.group << "#"
+         << s.recordBook << "#"
+         << s.course << endl;
+
+    file.close();
+}
+
+// ===ЧТЕНИЕ ИЗ ФАЙЛА ==================
+vector<Student> readStudents(const string& filename) {
+    ifstream file(filename);
+    vector<Student> students;
+    string line;
+
+    while (getline(file, line)) {
+        stringstream ss(line);
+        Student s;
+        string temp;
+
+        getline(ss, s.surname, '#');
+        getline(ss, s.name, '#');
+        getline(ss, s.patronymic, '#');
+        getline(ss, s.birthDate, '#');
+
+        getline(ss, temp, '#'); s.group = stoi(temp);
+        getline(ss, s.recordBook, '#');
+        getline(ss, temp, '#'); s.course = stoi(temp);
+
+        students.push_back(s);
+    }
+
+    return students;
+}
+
+// ========== ВЫВОД ==================
+void printStudents(const vector<Student>& students) {
+    for (const auto& s : students) {
+        cout << s.surname << " "
+             << s.name << " "
+             << s.patronymic << ", "
+             << s.birthDate << ", "
+             << "группа " << s.group << ", "
+             << "зачетка " << s.recordBook << ", "
+             << "курс " << s.course << endl;
+    }
+}
+
+// ================== ФИЛЬТР ПО КУРСУ ==================
+vector<Student> filterByCourse(const vector<Student>& students, int course) {
+    vector<Student> result;
+    for (const auto& s : students)
+        if (s.course == course)
+            result.push_back(s);
+    return result;
+}
+
+// ================== СОРТИРОВКА ПО ИМЕНИ ==================
+void sortByName(vector<Student>& students) {
+    sort(students.begin(), students.end(),
+         [](const Student& a, const Student& b) {
+             return a.name < b.name;
+         });
+}
+
+// ================== ПОДСЧЕТ ==================
+int countStudents(const vector<Student>& students) {
+    return students.size();
+}
+
+// ================== MAIN ==================
+int main() {
+    const string filename = "db_stud.dat";
+    int choice;
+
+    do {
+        cout << "\n1 - Добавить студента";
+        cout << "\n2 - Показать всех студентов";
+        cout << "\n3 - Показать студентов по курсу (с сортировкой по имени)";
+        cout << "\n4 - Количество студентов";
+        cout << "\n0 - Выход\n";
+        cout << "Выбор: ";
+        cin >> choice;
+
+        if (choice == 1) {
+            addStudent(filename);
+        }
+        else if (choice == 2) {
+            auto students = readStudents(filename);
+            printStudents(students);
+        }
+        else if (choice == 3) {
+            int course;
+            cout << "Введите курс: ";
+            cin >> course;
+
+            auto students = readStudents(filename);
+            auto filtered = filterByCourse(students, course);
+            sortByName(filtered);
+            printStudents(filtered);
+        }
+        else if (choice == 4) {
+            auto students = readStudents(filename);
+            cout << "Всего студентов: " << countStudents(students) << endl;
+        }
+
+    } while (choice != 0);
+
+    return 0;
+}
