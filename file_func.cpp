@@ -31,7 +31,7 @@ param record_book_number - Номер зачетной книжки
 param course - Курс обучения
 
 */
-void write_student_to_file(string filename, 
+int write_student_to_file(string filename, 
                    string surname, 
                    string name, 
                    string patronymic,
@@ -41,7 +41,7 @@ void write_student_to_file(string filename,
                    string course) {
     ofstream file(filename, ios::app);
     if (!file.is_open()) {
-        return;
+        return -1;
     }
 
     file << surname << "#" << name << "#" << patronymic << "#"
@@ -49,6 +49,7 @@ void write_student_to_file(string filename,
          << course << endl;
 
     file.close();
+    return 0;
 }
 
 /*
