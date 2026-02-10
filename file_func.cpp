@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <string> 
+#include <array> 
+#include <format> 
 using namespace std;
 /*
 1. Реализовать функции для работы с файлом данных, в котором содержатся сведения о студентах:
@@ -110,10 +112,47 @@ int count_students(string filename, int field =-1, string value="") {
     return count;
 }
 
-    
+
+
+/*
+	Функция для печати списка студентов
+*/
+
+/*
+	Функция для печати списка студентов
+*/
+
+void print_stud(string stud[][3], size_t n  ){
+	
+	for (int i= 0; i < n; i++){
+		cout << format("{:<20}|{:<10}|{:<10}|",stud[i][0], stud[i][1], stud[i][2])<<"\n";
+	}
+		
+}
+  
 int main(){
     
     string filename = "db_stud.dat";
+	string stud[3][3]{{"Hello","212","3"},{"ОК","56","7"},{"YES","12","11"}};
+	
+	int n = 3;
+	for (int i = 0; i < n; i++){
+		for (int j = 0; j < n-1; j++){
+				if (stud[j][1] > stud[j+1][1] ){
+					for (int k = 0; k < n; k++){
+						string z = stud[j][k];
+						stud[j][k] = stud[j+1][k];
+						stud[j+1][k] = z;
+					}
+				}
+		}
+		print_stud(stud, 3);
+	}
+	
+	//	array<array<string, 3>, 3> stud {{"Привет","2","3"},{"ОК","56","7"},{"YES","12","11"}};
+	print_stud(stud, 3);
+	
+	//	cout << format("{:<20}|{:<10}|{:<10}",stud[0][0],stud[0][1],stud[0][2])<<"\n";	    
     
     /*
     write_student_to_file(filename, "Сидоров", "Сидор", "Сидорович", 
