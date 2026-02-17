@@ -3,7 +3,7 @@
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
-    
+    // вертикальная линия
     sf::Vertex line_ver[] =
     {
         sf::Vertex(sf::Vector2f(100.f, 10.f)),
@@ -20,7 +20,7 @@ int main()
         sf::Vertex(sf::Vector2f(105.f, 20.f))
     };
 
-
+  // горизонтальная линия
     sf::Vertex line_gor[] =
     {
         sf::Vertex(sf::Vector2f(10.f, 100.f)),
