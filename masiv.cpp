@@ -1,244 +1,297 @@
-#include <iostream>
+#include <SFML/Graphics.hpp>
 #include <cmath>
-#include <cstdlib>
-#include <ctime>
+#include <vector>
 #include <string>
-using namespace std;
+#include <iostream>
 
-int main(){
-//1.Организовать ввод элементов массива с клавиатуры. Размер массива также должен задаваться пользователем. Введённый массив вывести на экран.
-/*
-    int n;
-    cout << "Введите размер массива";
-    cin >> n;
 
-    int massiv[n];
-
-    for (int i =0 ; i<n ; i++){
-        cout << "Введите"<<i<<"-ый элемент массива";
-        cin >> massiv[i];
-    }
-
-    for(int i = 0; i < n; i++){
-		cout << massiv[i] <<" ";
-	}
-*/
-
-//2.Создать массив случайного размера, состоящий из случайных целых чисел в заданном диапазоне.
-/*
-    srand(time(0));  // генератор
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
     
-    int a, b;
-    cout << "Введите диапазон значений (a b): ";
-    cin >> a >> b;
-    
-    // Случайный размер от 5 до 15
-    int k = rand() % (15 - 5) + 5;
-    int massiv[k];
+ 
+   
 
-    cout << "Создан массив из " << k << " элементов:" << endl;
-    
-    for(int i = 0; i < k; i++) {
-        massiv[i] = rand() % (b - a + 1) + a;
-        cout << massiv[i] << " ";
-    }
-    cout<<"\n";
-*/    
-    
-//3.    Заполнить массив случайным образом нулями и единицами так, чтобы количество единиц было в точности равно количеству нулей 
-/*    
-    srand(time(0));
-    int n, count1 = 0, count0 = 0;
-
-    cout << "Введите размер массива, Размер должен быть четным";
-    cin >> n;
-
-    while (n % 2 != 0)
+    void drawArrow(sf::RenderWindow & window,
+        sf::Vector2f start,
+        sf::Vector2f end,
+        sf::Color color = sf::Color::Black)
     {
-        cout << "Вы ввели нечетный размер. Введите ЧЕТНЫЙ размер: ";
-        cin >> n;
+        // Основная линия
+        sf::Vertex line[] = {
+            sf::Vertex(start, color),
+            sf::Vertex(end , color)
+        };
+        window.draw(line, 2, sf::Lines);
+
+        // Наконечник стрелки
+        float arrowSize = 12.f;
+        float angle = std::atan2(end.y - start.y, end.x - start.x);
+
+        sf::Vector2f leftPoint(
+            end.x - arrowSize * std::cos(angle - M_PI / 6),
+            end.y - arrowSize * std::sin(angle - M_PI / 6)
+        );
+        sf::Vector2f rightPoint(
+            end.x - arrowSize * std::cos(angle + M_PI / 6),
+            end.y - arrowSize * std::sin(angle + M_PI / 6)
+        );
+
+        sf::Vertex arrow[] = {
+            sf::Vertex(end, color),
+            sf::Vertex(leftPoint, color),
+            sf::Vertex(end, color),
+            sf::Vertex(rightPoint, color)
+        };
+        window.draw(arrow, 4, sf::Lines);
     }
 
-    int massiv[n];
-
-    for (int i = 0; i < n ; i++) { 
-        if (count1 == n/2  ) {
-            massiv[i] = 0;
-            count0 += 1;
-        } else if (count0 == n/2 ) {
-            massiv[i] = 1;
-            count1 += 1;
-        }else {
-            massiv[i] = rand() % 2;
-            if (massiv[i] == 1){
-                count1 += 1;
-            } else {
-                count0 += 1;
-            }
-        }
-        
-    }    
-
-    cout << "Массив: ";
-    for (int i = 0; i < n; i++) {
-        cout << massiv[i] << " ";
-    }
-*/
-
-//4. Дан массив A из 2n элементов. Вычислить A1−A2 + A3−A4 + … +A2n−1 + A2n
-/*
-    srand(time(0));
-    int n;
-
-    cout << "Введите n";
-    cin >> n;
-    
-    int size= 2*n;
-    int A[size];
-
-    for (int i = 0; i < size; i++) {
-        A[i] = rand() % 100;
-    }
-
-    int sum = 0;
-
-    for (int i = 0; i < size; i+= 2)
+    void drawScale(sf::RenderWindow & window, bool isVertical = true,
+        int scale = 10,
+        int center_x = 500,
+        int center_y = 400,
+        int length = 500,
+        int windowWidth = 1000,
+        int windowHeight = 800)
     {
-        sum += A[i] - A[i+1];
-    }
-    cout << "Сумма = "<< sum ;
-*/
+        /*
+        функция рисует шкалу на оси
+            :param isVertical - признак вертикальная ось: 1 или горизонтальная: 0
+            :param scale - масштаб
+            :param length - длина оси
+            :param center_x - x координата центра системы координат
+            :param center_x - x координата центра системы координат
+        */
+        sf::Color markColor = sf::Color::Black;
+        if (isVertical == 0) {  //отчсечки на горизонтальной оси
+            int x_shift = (windowWidth - length) / 2;
+            int start = center_x - x_shift;
+            int n = (length - start) / scale; //количество отсечек на  положительной части оси x
+            int m = (start) / scale; //количество отсеек на отрицательной части оси x
 
-//5.Дан массив и число p. Найти два различных числа в массиве, сумма которых наиболее близка к p.
-/*    
-    srand(time(0));
-    
-    int n, p, num1, num2;
-    cout << "Введите размер массива: ";
-    cin >> n;
-    cout << "Введите число p: ";
-    cin >> p;
-    
-    int massiv[n];
+            // Основные деления (положительная часть)
+            for (int i = 0; i <= n; i++) {
+                sf::Vertex mark[] = {
+                    sf::Vertex(sf::Vector2f(center_x + i * scale, center_y - 5), markColor),
+                    sf::Vertex(sf::Vector2f(center_x + i * scale, center_y + 5), markColor)
+                };
+                window.draw(mark, 2, sf::Lines);
+            }
+            // Основные деления (отрицательная часть)
+            for (int i = 0; i <= m; i++) {
+                sf::Vertex mark[] = {
+                    sf::Vertex(sf::Vector2f(center_x - i * scale, center_y - 5), markColor),
+                    sf::Vertex(sf::Vector2f(center_x - i * scale, center_y + 5), markColor)
+                };
+                window.draw(mark, 2, sf::Lines);
+            }
 
-    for (int i = 0; i < n; i++) {
-        massiv[i] = rand() % 100;
-    }
+            // Промежуточные деления (x5)
+            for (int i = 0; i <= n * 5; i++) {
+                float pos = i * (scale / 5.f);
+                sf::Vertex mark[] = {
+                    sf::Vertex(sf::Vector2f(center_x + pos, center_y - 2), markColor),
+                    sf::Vertex(sf::Vector2f(center_x + pos, center_y + 2), markColor)
+                };
+                window.draw(mark, 2, sf::Lines);
+            }
+            for (int i = 0; i <= m * 5; i++) {
+                float pos = i * (scale / 5.f);
+                sf::Vertex mark[] = {
+                    sf::Vertex(sf::Vector2f(center_x - pos, center_y - 2), markColor),
+                    sf::Vertex(sf::Vector2f(center_x - pos, center_y + 2), markColor)
+                };
+                window.draw(mark, 2, sf::Lines);
+            }
 
-    int minDiff = INT_MAX; 
 
-    for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n-1; j++) {
-            int sum = massiv[i] + massiv[j];
-            int diff = abs(sum - p);  
-            
-            if (diff < minDiff) {
-                minDiff = diff;
-                num1 = massiv[i];
-                num2 = massiv[j];
+        }
+        else {  // === ВЕРТИКАЛЬНАЯ ОСЬ ===
+            int y_shift = (windowHeight - length) / 2;
+            int start = center_y - y_shift;
+            int n = (length - start) / scale;
+            int m = start / scale;
+
+            // Основные деления
+            for (int i = 0; i <= n; i++) {
+                sf::Vertex mark[] = {
+                    sf::Vertex(sf::Vector2f(center_x - 5, center_y + i * scale), markColor),
+                    sf::Vertex(sf::Vector2f(center_x + 5, center_y + i * scale), markColor)
+                };
+                window.draw(mark, 2, sf::Lines);
+            }
+            for (int i = 0; i <= m; i++) {
+                sf::Vertex mark[] = {
+                    sf::Vertex(sf::Vector2f(center_x - 5, center_y - i * scale), markColor),
+                    sf::Vertex(sf::Vector2f(center_x + 5, center_y - i * scale), markColor)
+                };
+                window.draw(mark, 2, sf::Lines);
+            }
+
+            // Промежуточные деления
+            for (int i = 0; i <= n * 5; i++) {
+                float pos = i * (scale / 5.f);
+                sf::Vertex mark[] = {
+                    sf::Vertex(sf::Vector2f(center_x - 2, center_y + pos), markColor),
+                    sf::Vertex(sf::Vector2f(center_x + 2, center_y + pos), markColor)
+                };
+                window.draw(mark, 2, sf::Lines);
+            }
+            for (int i = 0; i <= m * 5; i++) {
+                float pos = i * (scale / 5.f);
+                sf::Vertex mark[] = {
+                    sf::Vertex(sf::Vector2f(center_x - 2, center_y - pos), markColor),
+                    sf::Vertex(sf::Vector2f(center_x + 2, center_y - pos), markColor)
+                };
+                window.draw(mark, 2, sf::Lines);
             }
         }
-    cout << "Найденная пара: " << num1 << " и " << num2 << endl;
-    cout << "Их сумма: " << num1 + num2 << endl;
-*/
 
-//6.Дан массив чисел. Заменить каждый элемент с чётным индексом на соседний слева элемент.
-/*
-    srand(time(0));
-    
-    int n;
-    cout << "Введите размер массива: ";
-    cin >> n;
-
-    int massiv[n];
-
-    cout << "Исходный массив: " ;
-    for (int i = 0; i < n; i++) {
-        massiv[i] = rand() % 100;
-        cout << massiv[i] << " "<< endl;
     }
+    void drawAxe(sf::RenderWindow& window, bool isVertical = true, int length = 500, bool isNeededLines = true, int width = 1000, int height = 800, int center_x = 500, int center_y = 400, int scale = 10)
+    {
+                           
+        /*функция рисует ось координат (горизонтальную или вертикальную)
 
-    for(int i = 2; i < n; i+=2){
-       massiv[i] = massiv[i - 1];
-    }
-		
-	}
-    cout << "Результат: ";
-    for (int i = 0; i < n; i++) {
-        cout << massiv[i] << " ";
-    }
-*/
+            :param isVertical - признак вертикальная ось: 1 или горизонтальная: 0
+            :param length - длина оси
+            :isNeededLines - нужна ли шкала на оси
+            :param center_x = координата центра координат по x
+            :param center_y = координата центра координат по y
+            :param scale - масштаб
+            :param width: - ширина полотна
+            :param height: - высота полотна
+        */
+        sf::Color axisColor = sf::Color::Black;
 
-//7.Дан массив. Поменять местами наибольший и наименьший элементы массива.
-/*
-    srand(time(0));
-    
-    int n;
-    cout << "Введите размер массива: ";
-    cin >> n;
-
-    int massiv[n];
-
-    cout << "Исходный массив: " ;
-    for (int i = 0; i < n; i++) {
-        massiv[i] = rand() % 100;
-        cout << massiv[i] << " "<< endl;
-    }
-
-    int max_cifr =  massiv[0];
-    int min_cifr = massiv[0];
-    int maxi = 0;
-    int mini = 0;
-
-    for(int i = 0; i < n; i++){
-
-
-       if (massiv[i] > max_cifr) {  
-            max_cifr = massiv[i];
-            maxi = i;
+        if (isVertical) {
+            int y_shift = (height - length) / 2;
+            // Стрелка вверх
+            drawArrow(window,
+                sf::Vector2f(center_x, y_shift + length),
+                sf::Vector2f(center_x, y_shift),
+                axisColor);
+            if (isNeededLines)
+                drawScale(window, true, scale, center_x, center_y, length, width, height);
         }
-        if (massiv[i] < min_cifr) { 
-            min_cifr = massiv[i];
-            mini = i;
+        else {
+            int x_shift = (width - length) / 2;
+            // Стрелка вправо
+            drawArrow(window,
+                sf::Vector2f(x_shift, center_y),
+                sf::Vector2f(x_shift + length, center_y),
+                axisColor);
+            if (isNeededLines)
+                drawScale(window, false, scale, center_x, center_y, length, width, height);
         }
 
-	}
-
-    massiv[maxi] = min_cifr;
-    massiv[mini] = max_cifr;
-
-    cout << "Результат: ";
-    for (int i = 0; i < n; i++) {
-        cout << massiv[i] << " ";
     }
-*/
+    void create_dpsk(sf::RenderWindow& window,
+        bool axesx = true,
+        bool axesy = true,
+        int width = 1000,
+        int height = 800,
+        int center_x = 500,
+        int center_y = 400,
+        int scale = 10)
+    {
+        /*Функция рисует Декартову систему координат на плокости
+        :param axesx: - наличие осей координат Оx 0 - нет, 1 -есть 
+        :param axesy: - наличие осей координат Оy 0 - нет, 1 -есть 
+        :param scale: - масштаб
+        :param width: - ширина полотна
+        :param height: - высота полотна
+        :param center_x = координата центра координат по x
+        :param center_y = координата центра координат по y
+        */
+        if (axesy)
+            drawAxe(window, true, height - 100, true, width, height, center_x, center_y, scale);
+        if (axesx)
+            drawAxe(window, false, width - 100, true, width, height, center_x, center_y, scale);
+    }
 
-//8.Даны два массива. Сформировать третий массив, состоящий из тех элементов, которые присутствуют в обоих массивах
-    /*
-    int massiv1[5] = {1,4,6,2,7};
-    int massiv2[5] = {8,5,3,2,7};
-    int massiv3[5] = {0};  
-    
-    int count = 0;  
-    
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 5; j++) {
-            if (massiv1[i] == massiv2[j]) {
-                massiv3[count] = massiv1[i];  
-                count++;
-                break;
+ 
+
+    // ФУНКЦИИ ДЛЯ ГРАФИКОВ
+
+
+    // Пример функции: f(x) = x²
+    float f(float x) {
+        return x * x;
+    }
+
+    // Рисование графика функции
+    void draw_func(sf::RenderWindow& window,
+        float (*func)(float),
+        float a,
+        float b,
+        int scale,
+        int center_x,
+        int center_y,
+        sf::Color colour = sf::Color::Black)
+    {
+        float h = 0.01f;  // шаг дискретизации
+
+        float prevX = a;
+        float prevY = func(a);
+
+        for (float x = a + h; x <= b; x += h) {
+            float y = func(x);
+
+            // Преобразование координат: SFML Y растёт вниз → инвертируем
+            sf::Vector2f p1(center_x + prevX * scale, center_y - prevY * scale);
+            sf::Vector2f p2(center_x + x * scale, center_y - y * scale);
+
+            sf::Vertex line[] = {   //рисуется маленький отрезок графика
+
+                sf::Vertex(p1, colour),
+                sf::Vertex(p2, colour)
+            };
+            window.draw(line, 2, sf::Lines);
+
+            prevX = x;
+            prevY = y;
+        }
+    }
+
+    int main() {
+        // Создаём окно SFML
+        sf::RenderWindow window(sf::VideoMode(1000, 800), "Graph Plotter - SFML C++");
+        window.setFramerateLimit(60);
+
+        // Параметры системы координат
+        const int width = 1000;
+        const int height = 800;
+        const int center_x = 500;
+        const int center_y = 400;
+        const int scale = 10;  // 1 единица = 50 пикселей
+
+        // Диапазон отрисовки функции f(x) = x²
+        float func_a = -4.f;
+        float func_b = 4.f;
+
+        while (window.isOpen())
+        {
+            sf::Event event;
+            while (window.pollEvent(event))
+            {
+                if (event.type == sf::Event::Closed)
+                    window.close();
             }
+
+            // Очистка экрана
+            window.clear(sf::Color::White);
+
+            // 1. Рисуем систему координат
+            create_dpsk(window, true, true, width, height, center_x, center_y, scale);
+
+            // 2. Рисуем график f(x) = x² зелёным цветом
+            draw_func(window, f, func_a, func_b, scale, center_x, center_y, sf::Color::Green);
+
+            // Отображение результата
+            window.display();
         }
+
+        return 0;
+
     }
-    
-    cout << "общие элементы: ";
-    for (int i = 0; i < count; i++) {
-        cout << massiv3[i] << " ";
-    }
-    
-*/ 
-	return 0;
-
-}
-
-
