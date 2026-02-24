@@ -264,7 +264,7 @@
         const int height = 800;
         const int center_x = 500;
         const int center_y = 400;
-        const int scale = 10;  // 1 единица = 50 пикселей
+        const int scale = 45;  // 1 единица = 50 пикселей
 
         // Диапазон отрисовки функции f(x) = x²
         float func_a = -4.f;
