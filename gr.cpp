@@ -115,7 +115,7 @@ void draw_axis(sf::RenderWindow &window, int width, int height, bool vertical, i
 double f(double x){
     //Функция
 
-    return cos(x);
+    return sin(x);
 }
 
 void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, int scale, int center_x, int center_y){
@@ -155,10 +155,13 @@ int main()
         }
 
         window.clear(sf::Color::White);
+        int sc = 20;
+        int center_x = 400;
+        int center_y = 400;
         
-        draw_axis(window, 800, 800, true, 500, 50, 400, 400);
-        draw_axis(window, 800, 800, false, 500, 50, 400, 400);
-        draw_func(window, f, -4, 4, 100, 400, 400);
+        draw_axis(window, 800, 800, true, 600, sc, center_x, center_y);
+        draw_axis(window, 800, 800, false, 600, sc, center_x, center_y);
+        draw_func(window, f, -6, 7, sc, center_x, center_y);
         window.display();
     }
 
