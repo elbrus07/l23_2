@@ -8,8 +8,8 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(W, H), "Simple Graph Calc");
 
     // Центр экрана (наша точка 0,0)
-    sf::Vector2f center(W / 2.0f, H / 2.0f);
-    float scale = 50.0f; // 50 пикселей = 1 единица
+    sf::Vector2f center(300, 300);
+    float scale = 10.0f; // 50 пикселей = 1 единица
 
     // 1. Создаем оси
     sf::VertexArray axes(sf::Lines, 4);
