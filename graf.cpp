@@ -11,15 +11,15 @@ int main()
 
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "y = sin(x)");
 
-    float scaleX = 80.0f;   // 1 радиан = 80 пикселей
-    float scaleY = 150.0f;  // 1 по Y = 150 пикселей
+    float scaleX = 200.0f;   // 1 радиан = 80 пикселей
+    float scaleY = 200.0f;  // 1 по Y = 150 пикселей
 
     float centerX = WIDTH / 2.0f;
     float centerY = HEIGHT / 2.0f;
 
     // ===== ШРИФТ =====
     sf::Font font;
-    font.loadFromFile("arial.ttf");
+    font.loadFromFile("/home/stud/LiberationMono-Regular.ttf");
 
     // ===== ГРАФИК =====
     sf::VertexArray graph(sf::LineStrip, WIDTH);
@@ -27,7 +27,7 @@ int main()
     for (int px = 0; px < WIDTH; px++)
     {
         float x = (px - centerX) / scaleX;
-        float y = sin(x);
+        float y = -x*x +3*x -1;
         float py = centerY - y * scaleY;
 
         graph[px].position = sf::Vector2f(px, py);
@@ -89,11 +89,11 @@ int main()
             std::ostringstream ss;
 
             if (i == 0) ss << "0";
-            else if (i == 1) ss << "π/2";
-            else if (i == -1) ss << "-π/2";
-            else if (i == 2) ss << "π";
-            else if (i == -2) ss << "-π";
-            else ss << i << "π/2";
+            else if (i == 1) ss << "pi/2";
+            else if (i == -1) ss << "-pi/2";
+            else if (i == 2) ss << "pi";
+            else if (i == -2) ss << "-pi";
+            else ss << i << "pi/2";
 
             sf::Text label;
             label.setFont(font);
