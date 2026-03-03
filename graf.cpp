@@ -10,7 +10,7 @@ int main()
     
     // Загружаем шрифт
     sf::Font font;
-    font.loadFromFile("arial.ttf"); // Скачай arial.ttf и положи рядом
+    font.loadFromFile("/home/stud/LiberationMono-Regular.ttf"); // Скачай arial.ttf и положи рядом
     
     // === ОСИ КООРДИНАТ ===
     sf::VertexArray xAxis(sf::Lines, 2);
