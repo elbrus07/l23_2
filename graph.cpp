@@ -144,7 +144,7 @@ void draw_axis(sf::RenderWindow &window, int width, int height, bool vertical, i
 double f(double x){
     //Функция
 
-    return sin(x);
+    return sin(x)*sin(x) - cos(x)*sin(x);
 }
 
 void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, int scale, int center_x, int center_y, sf::Color color){
@@ -169,7 +169,7 @@ void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, i
 
 int main()
 {
-    int scale = 30;
+    int scale = 70;
     int center_x = 400;
     int center_y = 400;
     int width = 800;
