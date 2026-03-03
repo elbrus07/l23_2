@@ -328,8 +328,8 @@ void drawNumber(sf::RenderWindow& window,
         // ЗАГРУЗКА ШРИФТА 
         sf::Font font;
         
-        font.loadFromFile("C:/Windows/Fonts/arial.ttf");
-        //font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+        //font.loadFromFile("C:/Windows/Fonts/arial.ttf");
+        font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
         
 
         // Параметры системы координат
@@ -337,11 +337,11 @@ void drawNumber(sf::RenderWindow& window,
         const int height = 800;
         const int center_x = 500;
         const int center_y = 400;
-        const int scale = 25;  // 1 единица = 50 пикселей
+        const int scale = 3;  // 1 единица = 50 пикселей
 
         // Диапазон отрисовки функции f(x) = x²
-        float func_a = -4.f;
-        float func_b = 4.f;
+        float func_a = -14.f;
+        float func_b = 14.f;
 
         while (window.isOpen())
         {
