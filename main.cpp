@@ -17,10 +17,15 @@ void drawNumber(sf::RenderWindow& window,
     bool isVertical,  // true = ось Y, false = ось X
     sf::Color color = sf::Color::Black)
 {
+
+    if (value == 0) {
+        return;  // Просто ничего не делаем
+    }
+
     sf::Text text;
     text.setFont(font);
     text.setString(std::to_string(value));
-    text.setCharacterSize(12);
+    text.setCharacterSize(11);
     text.setFillColor(color);
 
     // Центрируем текст по горизонтали
@@ -40,7 +45,7 @@ void drawNumber(sf::RenderWindow& window,
     window.draw(text);
 }
    
-
+    
     void drawArrow(sf::RenderWindow & window,
         sf::Vector2f start,
         sf::Vector2f end,
@@ -75,6 +80,8 @@ void drawNumber(sf::RenderWindow& window,
         window.draw(arrow, 4, sf::Lines);
     }
 
+   
+
     void drawScale(sf::RenderWindow & window, 
         sf::Font& font,
         bool isVertical = true,
@@ -95,47 +102,49 @@ void drawNumber(sf::RenderWindow& window,
         */
         sf::Color markColor = sf::Color::Black;
         if (isVertical == 0) {  //отчсечки на горизонтальной оси
-            int x_shift = (windowWidth - length) / 2;
-            int start = center_x - x_shift;
-            int n = (length - start) / scale; //количество отсечек на  положительной части оси x
-            int m = (start) / scale; //количество отсеек на отрицательной части оси x
+            int pixelsLeft = center_x - (windowWidth - length) / 2;
+            int pixelsRight = (windowWidth + length) / 2 - center_x;
+
+            int divisionsLeft = pixelsLeft / scale;
+            int divisionsRight = pixelsRight / scale;
 
             // Основные деления (положительная часть)
-            for (int i = 0; i <= n; i++) {
+            for (int i = 0; i <= divisionsRight; i++) {
                 int xPos = center_x + i * scale;
+                int value = i;  // Значение всегда начинается с 1
 
                 sf::Vertex mark[] = {
-                    sf::Vertex(sf::Vector2f(center_x + i * scale, center_y - 5), markColor),
-                    sf::Vertex(sf::Vector2f(center_x + i * scale, center_y + 5), markColor)
+                    sf::Vertex(sf::Vector2f(xPos, center_y - 5), markColor),
+                    sf::Vertex(sf::Vector2f(xPos, center_y + 5), markColor)
                 };
                 window.draw(mark, 2, sf::Lines);
 
                 //Числа
-                if (i % 5 == 0) {  // Каждое 5-е деление подписываем
-                    int value = (i * scale) / scale;  // Значение в единицах координат
-                    drawNumber(window, font, value, xPos, center_y, false);
-                }
+                drawNumber(window, font, value, xPos, center_y, false);
+
+                
 
             }
             // Основные деления (отрицательная часть)
-            for (int i = 0; i <= m; i++) {
+            for (int i = 0; i <= divisionsLeft; i++) {
                 int xPos = center_x - i * scale;
+                int value = -i;  // Отрицательные значения
 
                 sf::Vertex mark[] = {
-                    sf::Vertex(sf::Vector2f(center_x - i * scale, center_y - 5), markColor),
-                    sf::Vertex(sf::Vector2f(center_x - i * scale, center_y + 5), markColor)
+                    sf::Vertex(sf::Vector2f(xPos, center_y - 5), markColor),
+                    sf::Vertex(sf::Vector2f(xPos, center_y + 5), markColor)
                 };
                 window.draw(mark, 2, sf::Lines);
 
                 //Числа
-                if (i % 5 == 0 && i > 0) {  // Не рисуем 0 дважды
-                    int value = -(i * scale) / scale;
-                    drawNumber(window, font, value, xPos, center_y, false);
-                }
+                drawNumber(window, font, value, xPos, center_y, false);
+                
             }
 
+            
+
             // Промежуточные деления (x5)
-            for (int i = 0; i <= n * 5; i++) {
+            for (int i = 0; i <= divisionsRight * 5; i++) {
                 float pos = i * (scale / 5.f);
                 sf::Vertex mark[] = {
                     sf::Vertex(sf::Vector2f(center_x + pos, center_y - 2), markColor),
@@ -143,7 +152,7 @@ void drawNumber(sf::RenderWindow& window,
                 };
                 window.draw(mark, 2, sf::Lines);
             }
-            for (int i = 0; i <= m * 5; i++) {
+            for (int i = 0; i <= divisionsLeft * 5; i++) {
                 float pos = i * (scale / 5.f);
                 sf::Vertex mark[] = {
                     sf::Vertex(sf::Vector2f(center_x - pos, center_y - 2), markColor),
@@ -155,45 +164,44 @@ void drawNumber(sf::RenderWindow& window,
 
         }
         else {  // === ВЕРТИКАЛЬНАЯ ОСЬ ===
-            int y_shift = (windowHeight - length) / 2;
-            int start = center_y - y_shift;
-            int n = (length - start) / scale;
-            int m = start / scale;
+            int pixelsUp = center_y - (windowHeight - length) / 2;
+            int pixelsDown = (windowHeight + length) / 2 - center_y;
+
+            int divisionsUp = pixelsUp / scale;
+            int divisionsDown = pixelsDown / scale;
 
             // Основные деления
-            for (int i = 0; i <= n; i++) {
+            for (int i = 0; i <= divisionsUp; i++) {
                 int yPos = center_y + i * scale;
+                int value = i;
 
                 sf::Vertex mark[] = {
-                    sf::Vertex(sf::Vector2f(center_x - 5, center_y + i * scale), markColor),
-                    sf::Vertex(sf::Vector2f(center_x + 5, center_y + i * scale), markColor)
+                    sf::Vertex(sf::Vector2f(center_x - 5, yPos), markColor),
+                    sf::Vertex(sf::Vector2f(center_x + 5, yPos), markColor)
                 };
                 window.draw(mark, 2, sf::Lines);
 
                 //Числа
-                if (i % 5 == 0) {
-                    int value = -(i * scale) / scale;  
-                    drawNumber(window, font, value, center_x, yPos, true);
-                }
+                drawNumber(window, font, value, center_x, yPos, true);
+                
             }
-            for (int i = 0; i <= m; i++) {
+            for (int i = 0; i <= divisionsDown; i++) {
                 int yPos = center_y - i * scale;
+                int value = -i;
 
                 sf::Vertex mark[] = {
-                    sf::Vertex(sf::Vector2f(center_x - 5, center_y - i * scale), markColor),
-                    sf::Vertex(sf::Vector2f(center_x + 5, center_y - i * scale), markColor)
+                    sf::Vertex(sf::Vector2f(center_x - 5, yPos), markColor),
+                    sf::Vertex(sf::Vector2f(center_x + 5, yPos), markColor)
                 };
                 window.draw(mark, 2, sf::Lines);
 
                 //Числа
-                if (i % 5 == 0 && i > 0) {
-                    int value = (i * scale) / scale;
-                    drawNumber(window, font, value, center_x, yPos, true);
-                }
+                drawNumber(window, font, value, center_x, yPos, true);
+                
             }
 
             // Промежуточные деления
-            for (int i = 0; i <= n * 5; i++) {
+            for (int i = 0; i <= divisionsUp * 5; i++) {
                 float pos = i * (scale / 5.f);
                 sf::Vertex mark[] = {
                     sf::Vertex(sf::Vector2f(center_x - 2, center_y + pos), markColor),
@@ -201,7 +209,7 @@ void drawNumber(sf::RenderWindow& window,
                 };
                 window.draw(mark, 2, sf::Lines);
             }
-            for (int i = 0; i <= m * 5; i++) {
+            for (int i = 0; i <= divisionsDown * 5; i++) {
                 float pos = i * (scale / 5.f);
                 sf::Vertex mark[] = {
                     sf::Vertex(sf::Vector2f(center_x - 2, center_y - pos), markColor),
@@ -328,8 +336,8 @@ void drawNumber(sf::RenderWindow& window,
         // ЗАГРУЗКА ШРИФТА 
         sf::Font font;
         
-        //font.loadFromFile("C:/Windows/Fonts/arial.ttf");
-        font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+        font.loadFromFile("C:/Windows/Fonts/arial.ttf");
+        //font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
         
 
         // Параметры системы координат
@@ -337,11 +345,11 @@ void drawNumber(sf::RenderWindow& window,
         const int height = 800;
         const int center_x = 500;
         const int center_y = 400;
-        const int scale = 3;  // 1 единица = 50 пикселей
+        const int scale = 50;  // 1 единица = 50 пикселей
 
         // Диапазон отрисовки функции f(x) = x²
-        float func_a = -14.f;
-        float func_b = 14.f;
+        float func_a = -4.f;
+        float func_b = 4.f;
 
         while (window.isOpen())
         {
@@ -354,6 +362,10 @@ void drawNumber(sf::RenderWindow& window,
 
             // Очистка экрана
             window.clear(sf::Color::White);
+
+            sf::RectangleShape rectangle(sf::Vector2f(120, 50));
+
+            window.draw(rectangle);
 
             // 1. Рисуем систему координат
             create_dpsk(window, font, true, true, width, height, center_x, center_y, scale);
@@ -368,6 +380,9 @@ void drawNumber(sf::RenderWindow& window,
         return 0;
 
     }
+
+
+
 
 
 
