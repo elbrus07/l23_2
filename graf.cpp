@@ -32,7 +32,7 @@ int main() {
 
             graph.append(sf::Vertex(sf::Vector2f(pixel_x, pixel_y), sf::Color::Yellow));
         }
-        };
+    };
 
     sf::VertexArray axes(sf::Lines, 4);
     sf::VertexArray graph(sf::LineStrip);
