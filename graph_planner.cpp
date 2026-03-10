@@ -3,6 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <unistd.h>
 using namespace std;
 
 
@@ -167,10 +168,13 @@ void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, i
         line[1].color = color;
         window.draw(line);
         window.display();
+  
         //this_thread::sleep_for(chrono::milliseconds(10));
+        
         int p = 3;
         for (int i=0; i<p*10000000; i++){
         }
+        
     }
 }
 
@@ -199,12 +203,20 @@ int main()
     line[1].position = sf::Vector2f(width, height);
     line[1].color = sf::Color::Black;
     window.draw(line);
-        
+    
+    string inputString;
+    sf::Text textp(" ", font, 24);
+    textp.setPosition(810, 500);
+    textp.setFillColor(sf::Color::Black);
+    inputString.setOutlineColor(sf::Color::Black);
+    inputString.setOutlineThickness(1);
+    window.draw(textp);
+    
     // Создание кнопки
     sf::RectangleShape button(sf::Vector2f(150, 50));
     button.setPosition(810, 150);
     button.setFillColor(sf::Color::White);
-    button.setOutlineColor (sf::Color::Black);
+    button.setOutlineColor(sf::Color::Black);
     button.setOutlineThickness(1);
     window.draw(button);
     
@@ -226,12 +238,30 @@ int main()
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
+            
+            
+            
+            // Обработка ввода текста
+            if (event.type == sf::Event::TextEntered) {
+                if (event.text.unicode == '\b') { // Backspace
+                    if (!inputString.empty())
+                        inputString.pop_back();
+                } else if (event.text.unicode < 128) { // Обычные символы
+                    inputString += static_cast<char>(event.text.unicode);
+                }
+                textp.setString(inputString);
+            }
 
             // Проверка нажатия
-            if (event.type == sf::Event::MouseButtonPressed) {
-                if (event.mouseButton.button == sf::Mouse::Left) {
-                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-                    if (button.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            if (button.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                button.setFillColor(sf::Color(240,240,240));
+                window.draw(button);
+                window.draw(text);
+                window.display();
+                if (event.type == sf::Event::MouseButtonPressed) {
+                    
+                    if (event.mouseButton.button == sf::Mouse::Left) {
                         window.clear(sf::Color::White);
         
                         sf::VertexArray line(sf::Lines, 2);
@@ -265,10 +295,15 @@ int main()
                         
                     }
                 }
+            } else {
+                button.setFillColor(sf::Color::White);
+                window.draw(button);
+                window.draw(text);
             }
             
         }
-
+        window.draw(textp);
+        window.display();
     }
 
     return 0;
