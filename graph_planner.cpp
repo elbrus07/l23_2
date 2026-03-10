@@ -167,7 +167,10 @@ void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, i
         line[1].color = color;
         window.draw(line);
         window.display();
-        this_thread::sleep_for(chrono::milliseconds(10));
+        //this_thread::sleep_for(chrono::milliseconds(10));
+        int p = 3;
+        for (int i=0; i<p*10000000; i++){
+        }
     }
 }
 
