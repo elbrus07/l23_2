@@ -173,7 +173,7 @@ void drawNumber(sf::RenderWindow& window,
             // Основные деления
             for (int i = 0; i <= divisionsUp; i++) {
                 int yPos = center_y + i * scale;
-                int value = i;
+                int value = -i;
 
                 sf::Vertex mark[] = {
                     sf::Vertex(sf::Vector2f(center_x - 5, yPos), markColor),
@@ -187,7 +187,7 @@ void drawNumber(sf::RenderWindow& window,
             }
             for (int i = 0; i <= divisionsDown; i++) {
                 int yPos = center_y - i * scale;
-                int value = -i;
+                int value = i;
 
                 sf::Vertex mark[] = {
                     sf::Vertex(sf::Vector2f(center_x - 5, yPos), markColor),
@@ -336,8 +336,8 @@ void drawNumber(sf::RenderWindow& window,
         // ЗАГРУЗКА ШРИФТА 
         sf::Font font;
         
-        font.loadFromFile("C:/Windows/Fonts/arial.ttf");
-        //font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+        //font.loadFromFile("C:/Windows/Fonts/arial.ttf");
+        font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
         
 
         // Параметры системы координат
@@ -345,7 +345,7 @@ void drawNumber(sf::RenderWindow& window,
         const int height = 800;
         const int center_x = 500;
         const int center_y = 400;
-        const int scale = 50;  // 1 единица = 50 пикселей
+        const int scale = 40;  // 1 единица = 50 пикселей
 
         // Диапазон отрисовки функции f(x) = x²
         float func_a = -4.f;
