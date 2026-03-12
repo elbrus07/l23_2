@@ -172,7 +172,7 @@ void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, i
         //this_thread::sleep_for(chrono::milliseconds(10));
         
         int p = 3;
-        for (int i=0; i<p*10000000; i++){
+        for (int i=0; i<p*1000000; i++){
         }
         
     }
@@ -204,13 +204,22 @@ int main()
     line[1].color = sf::Color::Black;
     window.draw(line);
     
-    string inputString;
-    sf::Text textp(" ", font, 24);
-    textp.setPosition(810, 500);
-    textp.setFillColor(sf::Color::Black);
-    inputString.setOutlineColor(sf::Color::Black);
-    inputString.setOutlineThickness(1);
-    window.draw(textp);
+    // Настройка текста для ввода
+    sf::Text inputText("", font, 24);
+    inputText.setFillColor(sf::Color::Black);
+    inputText.setPosition(810, 50);
+
+    // Настройка фона поля ввода
+    sf::RectangleShape inputBox(sf::Vector2f(150, 40));
+    inputBox.setFillColor(sf::Color(240, 240, 240));
+    inputBox.setPosition(inputText.getPosition().x - 5, inputText.getPosition().y - 5);
+
+    // Переменная для хранения введенного текста
+    string inputStr;
+    
+    window.draw(inputBox);
+    window.draw(inputText);
+    
     
     // Создание кнопки
     sf::RectangleShape button(sf::Vector2f(150, 50));
@@ -239,17 +248,16 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
             
-            
-            
             // Обработка ввода текста
             if (event.type == sf::Event::TextEntered) {
-                if (event.text.unicode == '\b') { // Backspace
-                    if (!inputString.empty())
-                        inputString.pop_back();
-                } else if (event.text.unicode < 128) { // Обычные символы
-                    inputString += static_cast<char>(event.text.unicode);
+                if (event.text.unicode == '\b' && !inputStr.empty()) {
+                    // Удаление последнего символа (Backspace)
+                    inputStr.pop_back();
+                } else if (event.text.unicode < 128) {
+                    // Добавление нового символа
+                    inputStr += static_cast<char>(event.text.unicode);
                 }
-                textp.setString(inputString);
+                inputText.setString(inputStr);
             }
 
             // Проверка нажатия
@@ -270,6 +278,9 @@ int main()
                         line[1].position = sf::Vector2f(width, height);
                         line[1].color = sf::Color::Black;
                         window.draw(line);
+                        
+                        window.draw(inputBox);
+                        window.draw(inputText);
                         
                         // Создание кнопки
                         sf::RectangleShape button(sf::Vector2f(150, 50));
@@ -302,7 +313,8 @@ int main()
             }
             
         }
-        window.draw(textp);
+        window.draw(inputBox);
+        window.draw(inputText);
         window.display();
     }
 
