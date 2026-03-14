@@ -1,9 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <iostream>
-#include <chrono>
-#include <thread>
-#include <unistd.h>
 using namespace std;
 
 
@@ -150,12 +147,23 @@ double f(double x){
     return sin(x);
 }
 
-void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, int scale, int center_x, int center_y, sf::Color color){
+void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, int scale, int center_x, int center_y, sf::Color color, int delay){
     
     int length = b - a;  // длина отрезка
     double h = 0.1;  // шаг для рисования графика функции
     int n = (length / h);
+    
+    sf::Clock clock;
+    const sf::Time frameDelay = sf::milliseconds(delay); // 10 мс задержка
+    
     for (int i=0; i < n-1; i++) {
+        // Обработка событий, чтобы окно не "зависало"
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+        
         double x0 = (a + i * h) * scale;
         double y0 = func(a + i * h) * scale;
         double x1 = (a + (i + 1) * h) * scale;
@@ -168,12 +176,12 @@ void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, i
         line[1].color = color;
         window.draw(line);
         window.display();
-  
-        //this_thread::sleep_for(chrono::milliseconds(10));
         
-        int p = 3;
-        for (int i=0; i<p*1000000; i++){
+        sf::Time elapsed = clock.getElapsedTime();
+        if (elapsed < frameDelay) {
+            sf::sleep(frameDelay - elapsed);
         }
+        clock.restart();
         
     }
 }
@@ -186,6 +194,7 @@ int main()
     int width = 800;
     int height = 800;
     int length = 700;
+    int delay = 10;
     
     sf::RenderWindow window(sf::VideoMode(width + 200, height), "SFML works!", sf::Style::Titlebar | sf::Style::Close);
     sf::Font font;
@@ -223,7 +232,7 @@ int main()
     
     // Создание кнопки
     sf::RectangleShape button(sf::Vector2f(150, 50));
-    button.setPosition(810, 150);
+    button.setPosition(810, 350);
     button.setFillColor(sf::Color::White);
     button.setOutlineColor(sf::Color::Black);
     button.setOutlineThickness(1);
@@ -234,12 +243,12 @@ int main()
     text.setString("Draw");
     text.setCharacterSize(30);
     text.setFillColor(sf::Color::Black);
-    text.setPosition(840, 160);
+    text.setPosition(840, 360);
     window.draw(text);
     
     draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
     draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
-    draw_func(window, f, -6, 7, scale, center_x, center_y, sf::Color::Red);
+    draw_func(window, f, -6, 7, scale, center_x, center_y, sf::Color::Red, delay);
     
     
     while (window.isOpen()) {
@@ -247,6 +256,7 @@ int main()
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
+            
             
             // Обработка ввода текста
             if (event.type == sf::Event::TextEntered) {
@@ -258,7 +268,9 @@ int main()
                     inputStr += static_cast<char>(event.text.unicode);
                 }
                 inputText.setString(inputStr);
+                delay = stoi(inputStr);
             }
+                            
 
             // Проверка нажатия
             sf::Vector2i mousePos = sf::Mouse::getPosition(window);
@@ -272,36 +284,42 @@ int main()
                     if (event.mouseButton.button == sf::Mouse::Left) {
                         window.clear(sf::Color::White);
         
+                        /*
                         sf::VertexArray line(sf::Lines, 2);
                         line[0].position = sf::Vector2f(width, 0); 
                         line[0].color = sf::Color::Black;
                         line[1].position = sf::Vector2f(width, height);
                         line[1].color = sf::Color::Black;
+                        */
                         window.draw(line);
                         
                         window.draw(inputBox);
                         window.draw(inputText);
                         
                         // Создание кнопки
+                        /*
                         sf::RectangleShape button(sf::Vector2f(150, 50));
-                        button.setPosition(810, 150);
+                        button.setPosition(810, 350);
                         button.setFillColor(sf::Color::White);
                         button.setOutlineColor (sf::Color::Black);
                         button.setOutlineThickness(1);
+                        */
                         window.draw(button);
                         
+                        /*
                         sf::Text text;
                         text.setFont(font);
                         text.setString("Draw");
                         text.setCharacterSize(30);
                         text.setFillColor(sf::Color::Black);
-                        text.setPosition(840, 160);
+                        text.setPosition(840, 360);
+                        */
                         window.draw(text);
                         
                         
                         draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
                         draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
-                        draw_func(window, f, -6, 7, scale, center_x, center_y, sf::Color::Red);
+                        draw_func(window, f, -6, 7, scale, center_x, center_y, sf::Color::Red, delay);
                         std::cout << "Кнопка нажата!" << std::endl;
                         
                     }
