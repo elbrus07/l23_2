@@ -3,11 +3,19 @@
 #include <vector>
 #include <string>
 #include <iostream>
-
+#include <sstream>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
+// === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ УПРАВЛЕНИЯ ===
+int offset_x = 0;
+int offset_y = 0;
+int scale = 25;
+std::string function_str = "x*x";
+bool needRedraw = true;  // Флаг для перерисовки графика
+bool graphDrawn = false;
     
 void drawNumber(sf::RenderWindow& window,
     sf::Font& font,
@@ -291,7 +299,8 @@ void drawNumber(sf::RenderWindow& window,
 
     // Пример функции: f(x) = x²
     float f(float x) {
-        return x * x;
+        
+        return sin(x);
     }
 
     // Рисование графика функции
@@ -305,10 +314,10 @@ void drawNumber(sf::RenderWindow& window,
         sf::Color colour = sf::Color::Black)
     {
         float h = 0.01f;  // шаг дискретизации
-
+        
         float prevX = a;
         float prevY = func(a);
-        int i = 1;
+
         for (float x = a + h; x <= b; x += h) {
             float y = func(x);
 
@@ -322,13 +331,64 @@ void drawNumber(sf::RenderWindow& window,
                 sf::Vertex(p2, colour)
             };
             window.draw(line, 2, sf::Lines);
-
+            
             prevX = x;
             prevY = y;
-            window.display();
-            for ( i ; i < 100000000;i++) {}
+            
         }
     }
+
+    void drawUI(sf::RenderWindow& window, sf::Font& font, int width , int height  ) {
+
+
+        sf::RectangleShape inputBox(sf::Vector2f(200, 30));
+        inputBox.setPosition(width, 20);
+        inputBox.setFillColor(sf::Color::White);
+        inputBox.setOutlineColor(sf::Color::Black);
+        inputBox.setOutlineThickness(1);
+        window.draw(inputBox);
+    
+        sf::Text inputLabel;
+        inputLabel.setFont(font);
+        inputLabel.setString("f(x) =");
+        inputLabel.setCharacterSize(16);
+        inputLabel.setFillColor(sf::Color::Black);
+        inputLabel.setPosition(width, 0);
+        window.draw(inputLabel);
+
+        sf::Text inputText;
+        inputText.setFont(font);
+        inputText.setString(function_str);
+        inputText.setCharacterSize(16);
+        inputText.setFillColor(sf::Color::Black);
+        inputText.setPosition(width, 25);
+        window.draw(inputText);
+
+
+        
+
+        // Кнопка "Рисовать"
+        sf::RectangleShape drawButton(sf::Vector2f(100, 30));
+        drawButton.setPosition(width, 100);
+        drawButton.setOutlineColor(sf::Color::Black);
+        drawButton.setOutlineThickness(1);
+        window.draw(drawButton);
+
+        sf::Text drawText;
+        drawText.setFont(font);
+        drawText.setString("Paint");
+        drawText.setCharacterSize(16);
+        drawText.setFillColor(sf::Color::Black);
+        drawText.setPosition(width, 105);
+        window.draw(drawText);
+
+
+        
+
+        
+    }
+
+
 
     int main() {
         // Создаём окно SFML
@@ -338,20 +398,23 @@ void drawNumber(sf::RenderWindow& window,
         // ЗАГРУЗКА ШРИФТА 
         sf::Font font;
         
-        //font.loadFromFile("C:/Windows/Fonts/arial.ttf");
-        font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+        font.loadFromFile("C:/Windows/Fonts/arial.ttf");
+        //font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
         
 
         // Параметры системы координат
         const int width = 900;
         const int height = 800;
-        const int center_x = 450;
-        const int center_y = 400;
-        const int scale = 40;  // 1 единица = 50 пикселей
+        int center_x = 450;
+        int center_y = 400;
+        const int scale = 50;  // 1 единица = 50 пикселей
 
         // Диапазон отрисовки функции f(x) = x²
         float func_a = -4.f;
         float func_b = 4.f;
+
+
+
 
         while (window.isOpen())
         {
@@ -361,6 +424,42 @@ void drawNumber(sf::RenderWindow& window,
                 if (event.type == sf::Event::Closed)
                     window.close();
             }
+
+
+            //Управление стрелками
+            if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code == sf::Keyboard::Left) {
+                    offset_x -= 1;
+                    needRedraw = true;
+                }
+                if (event.key.code == sf::Keyboard::Right) {
+                    offset_x += 1;
+                    needRedraw = true;
+                }
+                if (event.key.code == sf::Keyboard::Up) {
+                    offset_y -= 1;
+                    needRedraw = true;
+                }
+                if (event.key.code == sf::Keyboard::Down) {
+                    offset_y += 1;
+                    needRedraw = true;
+                }
+            }
+
+            //Кнопка рисовать
+            if (event.type == sf::Event::MouseButtonPressed) {
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    // Проверяем клик по кнопке "Рисовать"
+                    if (event.mouseButton.x >= width && event.mouseButton.x <= width +100 &&
+                        event.mouseButton.y >= 100 && event.mouseButton.y <= 130) {
+                        graphDrawn = true;
+                    }
+                }
+            }
+
+            // Обновляем центр с учетом смещения
+            center_x = 500 + offset_x * scale;
+            center_y = 400 + offset_y * scale;
 
             // Очистка экрана
             window.clear(sf::Color::White);
@@ -372,8 +471,16 @@ void drawNumber(sf::RenderWindow& window,
             // 1. Рисуем систему координат
             create_dpsk(window, font, true, true, width, height, center_x, center_y, scale);
 
-            // 2. Рисуем график f(x) = x² зелёным цветом
+            // 2. Рисуем график f(x) = x² зелёным цветом (если нужно)
+            if (graphDrawn) {
             draw_func(window, f, func_a, func_b, scale, center_x, center_y, sf::Color::Green);
+
+            
+            }
+            
+
+
+            drawUI(window, font, width, height);
 
             // Отображение результата
             window.display();
