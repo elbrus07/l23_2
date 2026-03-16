@@ -308,7 +308,7 @@ void drawNumber(sf::RenderWindow& window,
 
         float prevX = a;
         float prevY = func(a);
-
+        int i = 1;
         for (float x = a + h; x <= b; x += h) {
             float y = func(x);
 
@@ -325,12 +325,14 @@ void drawNumber(sf::RenderWindow& window,
 
             prevX = x;
             prevY = y;
+            window.display();
+            for ( i ; i < 100000000;i++) {}
         }
     }
 
     int main() {
         // Создаём окно SFML
-        sf::RenderWindow window(sf::VideoMode(1000, 800), "Graph Plotter - SFML C++");
+        sf::RenderWindow window(sf::VideoMode(1200, 800), "Graph Plotter - SFML C++");
         window.setFramerateLimit(60);
 
         // ЗАГРУЗКА ШРИФТА 
@@ -341,9 +343,9 @@ void drawNumber(sf::RenderWindow& window,
         
 
         // Параметры системы координат
-        const int width = 1000;
+        const int width = 900;
         const int height = 800;
-        const int center_x = 500;
+        const int center_x = 450;
         const int center_y = 400;
         const int scale = 40;  // 1 единица = 50 пикселей
 
