@@ -175,13 +175,15 @@ void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, i
         line[1].position = sf::Vector2f(center_x + x1, center_y - y1);
         line[1].color = color;
         window.draw(line);
-        window.display();
-        
-        sf::Time elapsed = clock.getElapsedTime();
-        if (elapsed < frameDelay) {
-            sf::sleep(frameDelay - elapsed);
+        if (delay > 0) {
+            window.display();
+            
+            sf::Time elapsed = clock.getElapsedTime();
+            if (elapsed < frameDelay) {
+                sf::sleep(frameDelay - elapsed);
+            }
+            clock.restart();
         }
-        clock.restart();
         
     }
 }
@@ -204,6 +206,7 @@ int main()
         return 1;
     }
 
+
     window.clear(sf::Color::White);
     
     sf::VertexArray line(sf::Lines, 2);
@@ -214,20 +217,31 @@ int main()
     window.draw(line);
     
     // Настройка текста для ввода
-    sf::Text inputText("", font, 24);
-    inputText.setFillColor(sf::Color::Black);
-    inputText.setPosition(810, 50);
+    sf::Text inputTextFunc("", font, 24);
+    inputTextFunc.setFillColor(sf::Color::Black);
+    inputTextFunc.setPosition(810, 50);
+    
+    sf::Text inputTextScale("", font, 24);
+    inputTextScale.setFillColor(sf::Color::Black);
+    inputTextScale.setPosition(810, 100);
 
     // Настройка фона поля ввода
-    sf::RectangleShape inputBox(sf::Vector2f(150, 40));
-    inputBox.setFillColor(sf::Color(240, 240, 240));
-    inputBox.setPosition(inputText.getPosition().x - 5, inputText.getPosition().y - 5);
+    sf::RectangleShape inputBoxFunc(sf::Vector2f(150, 40));
+    inputBoxFunc.setFillColor(sf::Color(240, 240, 240));
+    inputBoxFunc.setPosition(inputTextFunc.getPosition().x - 5, inputTextFunc.getPosition().y - 5);
+    
+    sf::RectangleShape inputBoxScale(sf::Vector2f(60, 40));
+    inputBoxScale.setFillColor(sf::Color(240, 240, 240));
+    inputBoxScale.setPosition(inputTextScale.getPosition().x - 5, inputTextScale.getPosition().y - 5);
 
     // Переменная для хранения введенного текста
-    string inputStr;
+    string inputStrFunc;
+    string inputStrScale;
     
-    window.draw(inputBox);
-    window.draw(inputText);
+    window.draw(inputBoxFunc);
+    window.draw(inputTextFunc);
+    window.draw(inputBoxScale);
+    window.draw(inputTextScale);
     
     
     // Создание кнопки
@@ -257,20 +271,51 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
             
+            if (event.type == sf::Event::KeyPressed) {
+                int step = 10;
+                switch (event.key.code) {
+                    case sf::Keyboard::Left:  center_x -= step; break;
+                    case sf::Keyboard::Right: center_x += step; break;
+                    case sf::Keyboard::Up:    center_y -= step; break;
+                    case sf::Keyboard::Down:  center_y += step; break;
+                    default: break;
+                }
+                window.clear(sf::Color::White);
+        
+                        
+                window.draw(line);
+                
+                window.draw(inputBoxFunc);
+                window.draw(inputTextFunc);
+                window.draw(inputBoxScale);
+                window.draw(inputTextScale);
+                
+                // Создание кнопки
+                
+                window.draw(button);
+                
+                
+                window.draw(text);
+                
+                
+                draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
+                draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
+                draw_func(window, f, -6, 7, scale, center_x, center_y, sf::Color::Red, 0);
+            }
+            
             
             // Обработка ввода текста
             if (event.type == sf::Event::TextEntered) {
-                if (event.text.unicode == '\b' && !inputStr.empty()) {
+                if (event.text.unicode == '\b' && !inputStrFunc.empty()) {
                     // Удаление последнего символа (Backspace)
-                    inputStr.pop_back();
-                } else if (event.text.unicode < 128) {
+                    inputStrFunc.pop_back();
+                } else if (event.text.unicode != '\b' && event.text.unicode < 128) {
                     // Добавление нового символа
-                    inputStr += static_cast<char>(event.text.unicode);
+                    inputStrFunc += static_cast<char>(event.text.unicode);
                 }
-                inputText.setString(inputStr);
-                delay = stoi(inputStr);
-            }
-                            
+                inputTextFunc.setString(inputStrFunc);
+                //delay = stoi(inputStr);
+            }          
 
             // Проверка нажатия
             sf::Vector2i mousePos = sf::Mouse::getPosition(window);
@@ -284,43 +329,25 @@ int main()
                     if (event.mouseButton.button == sf::Mouse::Left) {
                         window.clear(sf::Color::White);
         
-                        /*
-                        sf::VertexArray line(sf::Lines, 2);
-                        line[0].position = sf::Vector2f(width, 0); 
-                        line[0].color = sf::Color::Black;
-                        line[1].position = sf::Vector2f(width, height);
-                        line[1].color = sf::Color::Black;
-                        */
+                        
                         window.draw(line);
                         
-                        window.draw(inputBox);
-                        window.draw(inputText);
+                        window.draw(inputBoxFunc);
+                        window.draw(inputTextFunc);
+                        window.draw(inputBoxScale);
+                        window.draw(inputTextScale);
                         
                         // Создание кнопки
-                        /*
-                        sf::RectangleShape button(sf::Vector2f(150, 50));
-                        button.setPosition(810, 350);
-                        button.setFillColor(sf::Color::White);
-                        button.setOutlineColor (sf::Color::Black);
-                        button.setOutlineThickness(1);
-                        */
+                        
                         window.draw(button);
                         
-                        /*
-                        sf::Text text;
-                        text.setFont(font);
-                        text.setString("Draw");
-                        text.setCharacterSize(30);
-                        text.setFillColor(sf::Color::Black);
-                        text.setPosition(840, 360);
-                        */
+                        
                         window.draw(text);
                         
                         
                         draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
                         draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
                         draw_func(window, f, -6, 7, scale, center_x, center_y, sf::Color::Red, delay);
-                        std::cout << "Кнопка нажата!" << std::endl;
                         
                     }
                 }
@@ -331,8 +358,10 @@ int main()
             }
             
         }
-        window.draw(inputBox);
-        window.draw(inputText);
+        window.draw(inputBoxFunc);
+        window.draw(inputTextFunc);
+        window.draw(inputBoxScale);
+        window.draw(inputTextScale);
         window.display();
     }
 
