@@ -398,8 +398,8 @@ void drawNumber(sf::RenderWindow& window,
         // ЗАГРУЗКА ШРИФТА 
         sf::Font font;
         
-        font.loadFromFile("C:/Windows/Fonts/arial.ttf");
-        //font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+        //font.loadFromFile("C:/Windows/Fonts/arial.ttf");
+        font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
         
 
         // Параметры системы координат
