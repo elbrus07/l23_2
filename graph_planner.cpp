@@ -238,6 +238,11 @@ int main()
     string inputStrFunc;
     string inputStrScale;
     
+    string m[] = {inputStrFunc, inputStrScale};
+    //string m[] = {inputStrFunc, inputStrScale};
+    
+    int active = -1;
+    
     window.draw(inputBoxFunc);
     window.draw(inputTextFunc);
     window.draw(inputBoxScale);
@@ -272,7 +277,7 @@ int main()
                 window.close();
             
             if (event.type == sf::Event::KeyPressed) {
-                int step = 10;
+                int step = 1*scale;
                 switch (event.key.code) {
                     case sf::Keyboard::Left:  center_x -= step; break;
                     case sf::Keyboard::Right: center_x += step; break;
@@ -303,22 +308,39 @@ int main()
                 draw_func(window, f, -6, 7, scale, center_x, center_y, sf::Color::Red, 0);
             }
             
+            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            if (event.type == sf::Event::MouseButtonPressed) {                   
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    if (inputBoxFunc.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        active = 0;
+                    } else if (inputBoxScale.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        active = 1;
+                    } else {
+                        active = -1;
+                    }
+                    
+                }
+            }
             
             // Обработка ввода текста
-            if (event.type == sf::Event::TextEntered) {
-                if (event.text.unicode == '\b' && !inputStrFunc.empty()) {
+            if (event.type == sf::Event::TextEntered && active != -1) {
+                if (event.text.unicode == '\b' && !m[active].empty()) {
                     // Удаление последнего символа (Backspace)
-                    inputStrFunc.pop_back();
+                    //inputStrFunc.pop_back();
+                    m[active].pop_back();
                 } else if (event.text.unicode != '\b' && event.text.unicode < 128) {
                     // Добавление нового символа
-                    inputStrFunc += static_cast<char>(event.text.unicode);
+                    m[active] += static_cast<char>(event.text.unicode);
                 }
-                inputTextFunc.setString(inputStrFunc);
+                
+                inputTextFunc.setString(m[0]);
+                inputTextScale.setString(m[1]);
+                
                 //delay = stoi(inputStr);
-            }          
+            }
 
             // Проверка нажатия
-            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            
             if (button.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                 button.setFillColor(sf::Color(240,240,240));
                 window.draw(button);
@@ -327,6 +349,7 @@ int main()
                 if (event.type == sf::Event::MouseButtonPressed) {
                     
                     if (event.mouseButton.button == sf::Mouse::Left) {
+                        scale = stoi(inputStrScale);
                         window.clear(sf::Color::White);
         
                         
