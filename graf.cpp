@@ -223,6 +223,7 @@ int main()
                     s.speed -= 0.5f;
                 if (event.key.code == sf::Keyboard::Space)
                     currentPoint = 0;
+                    progress = 0.0f;
             }
         }
         
