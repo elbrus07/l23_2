@@ -12,8 +12,9 @@
 // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ УПРАВЛЕНИЯ ===
 int offset_x = 0;
 int offset_y = 0;
-int scale = 25;
+bool textFieldActive = false;  // Флаг активности поля ввода
 std::string function_str = "x*x";
+std::string displayed_function = "x*x";  // То, что рисуется на графике
 bool needRedraw = true;  // Флаг для перерисовки графика
 bool graphDrawn = false;
     
@@ -179,7 +180,7 @@ void drawNumber(sf::RenderWindow& window,
             int divisionsDown = pixelsDown / scale;
 
             // Основные деления
-            for (int i = 0; i <= divisionsUp; i++) {
+            for (int i = 0; i <= divisionsDown; i++) {
                 int yPos = center_y + i * scale;
                 int value = -i;
 
@@ -193,7 +194,7 @@ void drawNumber(sf::RenderWindow& window,
                 drawNumber(window, font, value, center_x, yPos, true);
                 
             }
-            for (int i = 0; i <= divisionsDown; i++) {
+            for (int i = 0; i <= divisionsUp; i++) {
                 int yPos = center_y - i * scale;
                 int value = i;
 
@@ -209,7 +210,7 @@ void drawNumber(sf::RenderWindow& window,
             }
 
             // Промежуточные деления
-            for (int i = 0; i <= divisionsUp * 5; i++) {
+            for (int i = 0; i <= divisionsDown * 5; i++) {
                 float pos = i * (scale / 5.f);
                 sf::Vertex mark[] = {
                     sf::Vertex(sf::Vector2f(center_x - 2, center_y + pos), markColor),
@@ -217,7 +218,7 @@ void drawNumber(sf::RenderWindow& window,
                 };
                 window.draw(mark, 2, sf::Lines);
             }
-            for (int i = 0; i <= divisionsDown * 5; i++) {
+            for (int i = 0; i <= divisionsUp * 5; i++) {
                 float pos = i * (scale / 5.f);
                 sf::Vertex mark[] = {
                     sf::Vertex(sf::Vector2f(center_x - 2, center_y - pos), markColor),
@@ -287,15 +288,16 @@ void drawNumber(sf::RenderWindow& window,
         :param center_y = координата центра координат по y
         */
         if (axesy)
-            drawAxe(window, font, true, height - 100, true, width, height, center_x, center_y, scale);
+            drawAxe(window, font, true, height , true, width, height, center_x, center_y, scale);
         if (axesx)
-            drawAxe(window, font, false, width - 100, true, width, height, center_x, center_y, scale);
+            drawAxe(window, font, false, width , true, width, height, center_x, center_y, scale);
     }
 
  
 
     // ФУНКЦИИ ДЛЯ ГРАФИКОВ
 
+    
 
     // Пример функции: f(x) = x²
     float f(float x) {
@@ -303,9 +305,23 @@ void drawNumber(sf::RenderWindow& window,
         return sin(x);
     }
 
+    // Функция для вычисления значения по строке выражения
+        float evaluateFunction(const std::string& expr, float x) {
+            if (expr == "x*x") return x * x;
+            if (expr == "sin(x)") return std::sin(x);
+            if (expr == "cos(x)") return std::cos(x);
+            if (expr == "x") return x;
+            if (expr == "2*x") return 2 * x;
+            if (expr == "x/2") return x / 2;
+            if (expr == "x^3" || expr == "x*x*x") return x * x * x;
+            // По умолчанию возвращаем x*x
+            return x * x;
+        }
+
     // Рисование графика функции
     void draw_func(sf::RenderWindow& window,
-        float (*func)(float),
+        
+        const std::string& funcStr,
         float a,
         float b,
         int scale,
@@ -316,21 +332,26 @@ void drawNumber(sf::RenderWindow& window,
         float h = 0.01f;  // шаг дискретизации
         
         float prevX = a;
-        float prevY = func(a);
+        float prevY = evaluateFunction(funcStr, a);
 
         for (float x = a + h; x <= b; x += h) {
-            float y = func(x);
+            float y = evaluateFunction(funcStr, x);
 
-            
-            sf::Vector2f p1(center_x + prevX * scale, center_y - prevY * scale);
-            sf::Vector2f p2(center_x + x * scale, center_y - y * scale);
 
-            sf::Vertex line[] = {   //рисуется маленький отрезок графика
+            // Проверяем, чтобы значения были в разумных пределах
+            if (std::abs(prevY) < 1000 && std::abs(y) < 1000) {
+                sf::Vector2f p1(center_x + prevX * scale, center_y - prevY * scale);
+                sf::Vector2f p2(center_x + x * scale, center_y - y * scale);
 
-                sf::Vertex(p1, colour),
-                sf::Vertex(p2, colour)
-            };
-            window.draw(line, 2, sf::Lines);
+                sf::Vertex line[] = {   //рисуется маленький отрезок графика
+
+                    sf::Vertex(p1, colour),
+                    sf::Vertex(p2, colour)
+                };
+
+
+                window.draw(line, 2, sf::Lines);
+            }
             
             prevX = x;
             prevY = y;
@@ -339,13 +360,25 @@ void drawNumber(sf::RenderWindow& window,
     }
 
     void drawUI(sf::RenderWindow& window, sf::Font& font, int width , int height  ) {
+        
+        
+        
+        
+        
+        sf::RectangleShape inputBo(sf::Vector2f(300, height));
+            inputBo.setPosition(width, 0);
+            inputBo.setFillColor(sf::Color::White);
+            inputBo.setOutlineColor(sf::Color::Black);
+            inputBo.setOutlineThickness(1);
+            window.draw(inputBo);
 
 
+        //Окно ввода
         sf::RectangleShape inputBox(sf::Vector2f(200, 30));
         inputBox.setPosition(width, 20);
         inputBox.setFillColor(sf::Color::White);
-        inputBox.setOutlineColor(sf::Color::Black);
-        inputBox.setOutlineThickness(1);
+        inputBox.setOutlineColor(textFieldActive ? sf::Color::Blue : sf::Color::Black);
+        inputBox.setOutlineThickness(textFieldActive ? 2 : 1);
         window.draw(inputBox);
     
         sf::Text inputLabel;
@@ -356,9 +389,26 @@ void drawNumber(sf::RenderWindow& window,
         inputLabel.setPosition(width, 0);
         window.draw(inputLabel);
 
+        //отображение текста с курсором
+        std::string displayText = function_str;
+        if (textFieldActive) {
+            // Добавляем мигающий курсор
+            static sf::Clock cursorClock;
+            if (cursorClock.getElapsedTime().asSeconds() > 0.5f) {
+                cursorClock.restart();
+            }
+            bool showCursor = cursorClock.getElapsedTime().asSeconds() < 0.25f;
+            if (showCursor) {
+                displayText += "_";  // Добавляем символ курсора
+            }
+        }
+
+
+
+
         sf::Text inputText;
         inputText.setFont(font);
-        inputText.setString(function_str);
+        inputText.setString(displayText);
         inputText.setCharacterSize(16);
         inputText.setFillColor(sf::Color::Black);
         inputText.setPosition(width, 25);
@@ -398,8 +448,8 @@ void drawNumber(sf::RenderWindow& window,
         // ЗАГРУЗКА ШРИФТА 
         sf::Font font;
         
-        //font.loadFromFile("C:/Windows/Fonts/arial.ttf");
-        font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+        font.loadFromFile("C:/Windows/Fonts/arial.ttf");
+        //font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
         
 
         // Параметры системы координат
@@ -423,43 +473,74 @@ void drawNumber(sf::RenderWindow& window,
             {
                 if (event.type == sf::Event::Closed)
                     window.close();
-            }
 
 
-            //Управление стрелками
-            if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::Left) {
-                    offset_x -= 1;
-                    needRedraw = true;
-                }
-                if (event.key.code == sf::Keyboard::Right) {
-                    offset_x += 1;
-                    needRedraw = true;
-                }
-                if (event.key.code == sf::Keyboard::Up) {
-                    offset_y -= 1;
-                    needRedraw = true;
-                }
-                if (event.key.code == sf::Keyboard::Down) {
-                    offset_y += 1;
-                    needRedraw = true;
-                }
-            }
 
-            //Кнопка рисовать
-            if (event.type == sf::Event::MouseButtonPressed) {
-                if (event.mouseButton.button == sf::Mouse::Left) {
-                    // Проверяем клик по кнопке "Рисовать"
-                    if (event.mouseButton.x >= width && event.mouseButton.x <= width +100 &&
-                        event.mouseButton.y >= 100 && event.mouseButton.y <= 130) {
-                        graphDrawn = true;
+                //  Обработка кликов для активации поля ввода
+                if (event.type == sf::Event::MouseButtonPressed) {
+                    if (event.mouseButton.button == sf::Mouse::Left) {
+                        // Проверяем клик по полю ввода (x: width до width+200, y: 20 до 50)
+                        if (event.mouseButton.x >= width && event.mouseButton.x <= width + 200 &&
+                            event.mouseButton.y >= 20 && event.mouseButton.y <= 50) {
+                            textFieldActive = true;  // Активируем поле ввода
+                        }
+                        // Проверяем клик по кнопке "Рисовать"
+                        else if (event.mouseButton.x >= width && event.mouseButton.x <= width + 100 &&
+                            event.mouseButton.y >= 100 && event.mouseButton.y <= 130) {
+                            displayed_function = function_str;
+                            graphDrawn = true;
+                            textFieldActive = false;  // Деактивируем поле ввода
+                        }
+                        else {
+                            textFieldActive = false;  // Клик вне поля - деактивируем
+                        }
+                        
                     }
                 }
-            }
 
+                //  Обработка ввода текста
+                if (textFieldActive && event.type == sf::Event::TextEntered) {
+                    if (event.text.unicode == 8) { // Backspace - стирание
+                        if (!function_str.empty()) {
+                            function_str.pop_back();
+                        }
+                    }
+                    else if (event.text.unicode >= 32 && event.text.unicode < 128) { // Печатные символы
+                        function_str += static_cast<char>(event.text.unicode);
+                    }
+                    
+                    
+                }
+
+
+
+
+                //Управление стрелками
+                if (!textFieldActive && event.type == sf::Event::KeyPressed) {
+                    if (event.key.code == sf::Keyboard::Left) {
+                        offset_x -= 1;
+                        needRedraw = true;
+                    }
+                    if (event.key.code == sf::Keyboard::Right) {
+                        offset_x += 1;
+                        needRedraw = true;
+                    }
+                    if (event.key.code == sf::Keyboard::Up) {
+                        offset_y -= 1;
+                        needRedraw = true;
+                    }
+                    if (event.key.code == sf::Keyboard::Down) {
+                        offset_y += 1;
+                        needRedraw = true;
+                    }
+                }
+
+
+                
+            }
             // Обновляем центр с учетом смещения
-            center_x = 500 + offset_x * scale;
-            center_y = 400 + offset_y * scale;
+            center_x = 500 + offset_x *3 ;
+            center_y = 400 + offset_y *3;
 
             // Очистка экрана
             window.clear(sf::Color::White);
@@ -473,7 +554,7 @@ void drawNumber(sf::RenderWindow& window,
 
             // 2. Рисуем график f(x) = x² зелёным цветом (если нужно)
             if (graphDrawn) {
-            draw_func(window, f, func_a, func_b, scale, center_x, center_y, sf::Color::Green);
+            draw_func(window, displayed_function, func_a, func_b, scale, center_x, center_y, sf::Color::Green);
 
             
             }
