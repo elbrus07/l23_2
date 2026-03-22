@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <iostream>
+#include <string>
 using namespace std;
 
 
@@ -188,6 +189,84 @@ void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, i
     }
 }
 
+class TextInput {
+private:
+    bool active = false;
+    string inputStr;
+    int x;
+    int y;
+    int w;
+    int h;
+    sf::Font font;
+    sf::Text inputText;
+    sf::RectangleShape inputBox;
+    
+public:
+    TextInput(int x, int y, int w, int h, sf::Font& font) {
+        this->x = x;
+        this->y = y;
+        this->w = w;
+        this->h = h;
+        this->font = font;
+        
+        // Настройка текста для ввода
+        inputText.setFont(this->font);
+        inputText.setString("");
+        inputText.setCharacterSize(24);
+        inputText.setFillColor(sf::Color::Black);
+        inputText.setPosition(this->x, this->y);
+        
+        // Настройка фона поля ввода
+        inputBox.setSize(sf::Vector2f(this->w, this->h));
+        inputBox.setFillColor(sf::Color(240, 240, 240));
+        inputBox.setOutlineColor(sf::Color::Black);
+        inputBox.setOutlineThickness(1);
+        inputBox.setPosition(inputText.getPosition().x - 5, inputText.getPosition().y - 5);
+    }
+    
+    void draw_text_input(sf::RenderWindow &window) {
+        window.draw(inputBox);
+        window.draw(inputText);
+    }
+    
+    // Обновление ввода
+    void handleEvent(sf::Event& event) {
+        if (event.type == sf::Event::MouseButtonPressed) {
+            // Проверка клика по полю
+            sf::Vector2f mousePos = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
+            if (inputBox.getGlobalBounds().contains(mousePos)) {
+                setActive(true);
+            } else {
+                setActive(false);
+            }
+        }
+
+        if (active && event.type == sf::Event::TextEntered) {
+            char c = event.text.unicode;
+
+            // Обработка Backspace
+            if (c == 8 && !inputStr.empty()) { // ASCII 8 = Backspace
+                inputStr.pop_back();
+            }
+            // Обработка допустимых символов (буквы, цифры, пробел)
+            else if (c >= 32 && c <= 126 && inputStr.length() < 16) { // ASCII печатные символы
+                inputStr += c;
+            }
+
+            // Обновляем текст
+            inputText.setString(inputStr);
+        }
+    }
+    
+    // Управление активностью
+    void setActive(bool state) {
+        active = state;
+        inputBox.setOutlineColor(active ? sf::Color::Blue : sf::Color::Black);
+    }
+
+    
+};
+
 int main()
 {
     int scale = 50;
@@ -197,6 +276,8 @@ int main()
     int height = 800;
     int length = 700;
     int delay = 10;
+    int a = -10;
+    int b = 8;
     
     sf::RenderWindow window(sf::VideoMode(width + 200, height), "SFML works!", sf::Style::Titlebar | sf::Style::Close);
     sf::Font font;
@@ -216,37 +297,14 @@ int main()
     line[1].color = sf::Color::Black;
     window.draw(line);
     
-    // Настройка текста для ввода
-    sf::Text inputTextFunc("", font, 24);
-    inputTextFunc.setFillColor(sf::Color::Black);
-    inputTextFunc.setPosition(810, 50);
+    TextInput Func(815, 50, 180, 40, font);
+    TextInput Scale(815, 100, 50, 40, font);
+    TextInput Delay(915, 100, 50, 40, font);
     
-    sf::Text inputTextScale("", font, 24);
-    inputTextScale.setFillColor(sf::Color::Black);
-    inputTextScale.setPosition(810, 100);
-
-    // Настройка фона поля ввода
-    sf::RectangleShape inputBoxFunc(sf::Vector2f(150, 40));
-    inputBoxFunc.setFillColor(sf::Color(240, 240, 240));
-    inputBoxFunc.setPosition(inputTextFunc.getPosition().x - 5, inputTextFunc.getPosition().y - 5);
     
-    sf::RectangleShape inputBoxScale(sf::Vector2f(60, 40));
-    inputBoxScale.setFillColor(sf::Color(240, 240, 240));
-    inputBoxScale.setPosition(inputTextScale.getPosition().x - 5, inputTextScale.getPosition().y - 5);
-
-    // Переменная для хранения введенного текста
-    string inputStrFunc;
-    string inputStrScale;
-    
-    string m[] = {inputStrFunc, inputStrScale};
-    //string m[] = {inputStrFunc, inputStrScale};
-    
-    int active = -1;
-    
-    window.draw(inputBoxFunc);
-    window.draw(inputTextFunc);
-    window.draw(inputBoxScale);
-    window.draw(inputTextScale);
+    Func.draw_text_input(window);
+    Scale.draw_text_input(window);
+    Delay.draw_text_input(window);
     
     
     // Создание кнопки
@@ -267,7 +325,7 @@ int main()
     
     draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
     draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
-    draw_func(window, f, -6, 7, scale, center_x, center_y, sf::Color::Red, delay);
+    draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, delay);
     
     
     while (window.isOpen()) {
@@ -275,9 +333,13 @@ int main()
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
+                
+            Func.handleEvent(event);
+            Scale.handleEvent(event);
+            Delay.handleEvent(event);
             
             if (event.type == sf::Event::KeyPressed) {
-                int step = 1*scale;
+                int step = 10;
                 switch (event.key.code) {
                     case sf::Keyboard::Left:  center_x -= step; break;
                     case sf::Keyboard::Right: center_x += step; break;
@@ -290,10 +352,9 @@ int main()
                         
                 window.draw(line);
                 
-                window.draw(inputBoxFunc);
-                window.draw(inputTextFunc);
-                window.draw(inputBoxScale);
-                window.draw(inputTextScale);
+                Func.draw_text_input(window);
+                Scale.draw_text_input(window);
+                Delay.draw_text_input(window);
                 
                 // Создание кнопки
                 
@@ -305,39 +366,10 @@ int main()
                 
                 draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
                 draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
-                draw_func(window, f, -6, 7, scale, center_x, center_y, sf::Color::Red, 0);
+                draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, 0);
             }
             
             sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-            if (event.type == sf::Event::MouseButtonPressed) {                   
-                if (event.mouseButton.button == sf::Mouse::Left) {
-                    if (inputBoxFunc.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        active = 0;
-                    } else if (inputBoxScale.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        active = 1;
-                    } else {
-                        active = -1;
-                    }
-                    
-                }
-            }
-            
-            // Обработка ввода текста
-            if (event.type == sf::Event::TextEntered && active != -1) {
-                if (event.text.unicode == '\b' && !m[active].empty()) {
-                    // Удаление последнего символа (Backspace)
-                    //inputStrFunc.pop_back();
-                    m[active].pop_back();
-                } else if (event.text.unicode != '\b' && event.text.unicode < 128) {
-                    // Добавление нового символа
-                    m[active] += static_cast<char>(event.text.unicode);
-                }
-                
-                inputTextFunc.setString(m[0]);
-                inputTextScale.setString(m[1]);
-                
-                //delay = stoi(inputStr);
-            }
 
             // Проверка нажатия
             
@@ -349,16 +381,15 @@ int main()
                 if (event.type == sf::Event::MouseButtonPressed) {
                     
                     if (event.mouseButton.button == sf::Mouse::Left) {
-                        scale = stoi(inputStrScale);
+                        //scale = stoi(inputStrScale);
                         window.clear(sf::Color::White);
         
                         
                         window.draw(line);
                         
-                        window.draw(inputBoxFunc);
-                        window.draw(inputTextFunc);
-                        window.draw(inputBoxScale);
-                        window.draw(inputTextScale);
+                        Func.draw_text_input(window);
+                        Scale.draw_text_input(window);
+                        Delay.draw_text_input(window);
                         
                         // Создание кнопки
                         
@@ -370,7 +401,7 @@ int main()
                         
                         draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
                         draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
-                        draw_func(window, f, -6, 7, scale, center_x, center_y, sf::Color::Red, delay);
+                        draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, delay);
                         
                     }
                 }
@@ -381,10 +412,9 @@ int main()
             }
             
         }
-        window.draw(inputBoxFunc);
-        window.draw(inputTextFunc);
-        window.draw(inputBoxScale);
-        window.draw(inputTextScale);
+        Func.draw_text_input(window);
+        Scale.draw_text_input(window);
+        Delay.draw_text_input(window);
         window.display();
     }
 
