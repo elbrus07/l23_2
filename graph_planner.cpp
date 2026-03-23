@@ -148,7 +148,7 @@ double f(double x){
     return sin(x);
 }
 
-void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, int scale, int center_x, int center_y, sf::Color color, int delay){
+void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, int scale, int center_x, int center_y, sf::Color color, int delay, int width){
     
     int length = b - a;  // длина отрезка
     double h = 0.1;  // шаг для рисования графика функции
@@ -169,6 +169,8 @@ void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, i
         double y0 = func(a + i * h) * scale;
         double x1 = (a + (i + 1) * h) * scale;
         double y1 = func(a + (i + 1) * h) * scale;
+        
+        if (center_x + x0 > width-10) break;
         
         sf::VertexArray line(sf::Lines, 2);
         line[0].position = sf::Vector2f(center_x + x0, center_y - y0); 
@@ -202,16 +204,17 @@ private:
     sf::RectangleShape inputBox;
     
 public:
-    TextInput(int x, int y, int w, int h, sf::Font& font) {
+    TextInput(int x, int y, int w, int h, sf::Font& font, string str = "") {
         this->x = x;
         this->y = y;
         this->w = w;
         this->h = h;
         this->font = font;
+        this->inputStr = str;
         
         // Настройка текста для ввода
         inputText.setFont(this->font);
-        inputText.setString("");
+        inputText.setString(str);
         inputText.setCharacterSize(24);
         inputText.setFillColor(sf::Color::Black);
         inputText.setPosition(this->x, this->y);
@@ -245,25 +248,26 @@ public:
             char c = event.text.unicode;
 
             // Обработка Backspace
-            if (c == 8 && !inputStr.empty()) { // ASCII 8 = Backspace
+            if (c == 8 && !inputStr.empty()) { 
                 inputStr.pop_back();
             }
             // Обработка допустимых символов (буквы, цифры, пробел)
-            else if (c >= 32 && c <= 126 && inputStr.length() < 16) { // ASCII печатные символы
+            else if (c >= 32 && c <= 126 && inputStr.length() < 16) {
                 inputStr += c;
             }
 
-            // Обновляем текст
             inputText.setString(inputStr);
         }
     }
     
-    // Управление активностью
     void setActive(bool state) {
         active = state;
         inputBox.setOutlineColor(active ? sf::Color::Blue : sf::Color::Black);
     }
-
+    
+    string get_text() {
+        return inputStr;
+    }
     
 };
 
@@ -276,8 +280,8 @@ int main()
     int height = 800;
     int length = 700;
     int delay = 10;
-    int a = -10;
-    int b = 8;
+    int a = -6;
+    int b = 7;
     
     sf::RenderWindow window(sf::VideoMode(width + 200, height), "SFML works!", sf::Style::Titlebar | sf::Style::Close);
     sf::Font font;
@@ -298,14 +302,17 @@ int main()
     window.draw(line);
     
     TextInput Func(815, 50, 180, 40, font);
-    TextInput Scale(815, 100, 50, 40, font);
-    TextInput Delay(915, 100, 50, 40, font);
+    TextInput Scale(815, 100, 80, 40, font, "50");
+    TextInput Delay(915, 100, 80, 40, font, "10"); 
+    TextInput A(815, 150, 80, 40, font, "-6");
+    TextInput B(915, 150, 80, 40, font, "7");
     
     
     Func.draw_text_input(window);
     Scale.draw_text_input(window);
     Delay.draw_text_input(window);
-    
+    A.draw_text_input(window);
+    B.draw_text_input(window);
     
     // Создание кнопки
     sf::RectangleShape button(sf::Vector2f(150, 50));
@@ -325,7 +332,7 @@ int main()
     
     draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
     draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
-    draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, delay);
+    draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, delay, width);
     
     
     while (window.isOpen()) {
@@ -337,6 +344,8 @@ int main()
             Func.handleEvent(event);
             Scale.handleEvent(event);
             Delay.handleEvent(event);
+            A.handleEvent(event);
+            B.handleEvent(event);
             
             if (event.type == sf::Event::KeyPressed) {
                 int step = 10;
@@ -355,6 +364,14 @@ int main()
                 Func.draw_text_input(window);
                 Scale.draw_text_input(window);
                 Delay.draw_text_input(window);
+                A.draw_text_input(window);
+                B.draw_text_input(window);
+                
+                Func.draw_text_input(window);
+                Scale.draw_text_input(window);
+                Delay.draw_text_input(window);
+                A.draw_text_input(window);
+                B.draw_text_input(window);
                 
                 // Создание кнопки
                 
@@ -366,7 +383,7 @@ int main()
                 
                 draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
                 draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
-                draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, 0);
+                draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, 0, width);
             }
             
             sf::Vector2i mousePos = sf::Mouse::getPosition(window);
@@ -390,6 +407,8 @@ int main()
                         Func.draw_text_input(window);
                         Scale.draw_text_input(window);
                         Delay.draw_text_input(window);
+                        A.draw_text_input(window);
+                        B.draw_text_input(window);
                         
                         // Создание кнопки
                         
@@ -398,10 +417,14 @@ int main()
                         
                         window.draw(text);
                         
+                        scale = stoi(Scale.get_text());
+                        delay = stoi(Delay.get_text());
+                        a = stoi(A.get_text());
+                        b = stoi(B.get_text());
                         
                         draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
                         draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
-                        draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, delay);
+                        draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, delay, width);
                         
                     }
                 }
@@ -415,6 +438,8 @@ int main()
         Func.draw_text_input(window);
         Scale.draw_text_input(window);
         Delay.draw_text_input(window);
+        A.draw_text_input(window);
+        B.draw_text_input(window);
         window.display();
     }
 
