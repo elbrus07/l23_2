@@ -389,6 +389,24 @@ void drawNumber(sf::RenderWindow& window,
         inputLabel.setPosition(width, 0);
         window.draw(inputLabel);
 
+
+        sf::Text inputfun;
+        inputfun.setFont(font);
+        inputfun.setString("Function:");
+        inputfun.setCharacterSize(16);
+        inputfun.setFillColor(sf::Color::Black);
+        inputfun.setPosition(width, height / 3 -30);
+        window.draw(inputfun);
+
+
+        sf::Text inputfunc;
+        inputfunc.setFont(font);
+        inputfunc.setString("x*x  | sin(x) | cos(x) | x | 2*x | x/2 | x^3");
+        inputfunc.setCharacterSize(16);
+        inputfunc.setFillColor(sf::Color::Black);
+        inputfunc.setPosition(width,height/3);
+        window.draw(inputfunc);
+
         //отображение текста с курсором
         std::string displayText = function_str;
         if (textFieldActive) {
@@ -448,8 +466,12 @@ void drawNumber(sf::RenderWindow& window,
         // ЗАГРУЗКА ШРИФТА 
         sf::Font font;
         
-        font.loadFromFile("C:/Windows/Fonts/arial.ttf");
-        //font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+        if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
+            font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+        }else{
+            font.loadFromFile("C:/Windows/Fonts/arial.ttf");
+        }
+        
         
 
         // Параметры системы координат
@@ -457,7 +479,7 @@ void drawNumber(sf::RenderWindow& window,
         const int height = 800;
         int center_x = 450;
         int center_y = 400;
-        const int scale = 50;  // 1 единица = 50 пикселей
+        int scale = 50;  // 1 единица = 50 пикселей
 
         // Диапазон отрисовки функции f(x) = x²
         float func_a = -4.f;
@@ -512,7 +534,21 @@ void drawNumber(sf::RenderWindow& window,
                     
                 }
 
-
+                float zoomSpeed = 0.1f;
+                // Масштабирование с помощью колесика мыши
+                if (event.type == sf::Event::MouseWheelScrolled) {
+                    if (event.mouseWheelScroll.delta > 0) { // Увеличение масштаба
+                        scale *= (1.0f + zoomSpeed);
+                    }
+                    else if (event.mouseWheelScroll.delta < 0) { // Уменьшение масштаба
+                        scale /= (1.0f + zoomSpeed);
+                    }
+                    // Ограничение масштаба
+                    if (scale < 10.0f) scale = 10.0f;
+                    if (scale > 500.0f) scale = 500.0f;
+                    
+                    
+                }
 
 
                 //Управление стрелками
