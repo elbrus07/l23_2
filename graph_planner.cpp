@@ -191,7 +191,7 @@ void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, i
     }
 }
 
-class TextInput {
+class TextInputX {
 private:
     bool active = false;
     string inputStr;
@@ -204,7 +204,7 @@ private:
     sf::RectangleShape inputBox;
     
 public:
-    TextInput(int x, int y, int w, int h, sf::Font& font, string str = "") {
+    TextInputX(int x, int y, int w, int h, sf::Font& font, string str = "") {
         this->x = x;
         this->y = y;
         this->w = w;
@@ -271,6 +271,11 @@ public:
     
 };
 
+class TextInput : public TextInputX {
+public:
+    using TextInputX::TextInputX;
+};
+
 int main()
 {
     int scale = 50;
@@ -293,6 +298,14 @@ int main()
 
 
     window.clear(sf::Color::White);
+    
+    sf::RectangleShape Box;
+    Box.setSize(sf::Vector2f(200, height));
+    Box.setFillColor(sf::Color::White);
+    Box.setOutlineColor(sf::Color::Black);
+    Box.setOutlineThickness(1);
+    Box.setPosition(800, 0);
+    
     
     sf::VertexArray line(sf::Lines, 2);
     line[0].position = sf::Vector2f(width, 0); 
@@ -334,6 +347,7 @@ int main()
     draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
     draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, delay, width);
     
+    window.draw(Box);
     
     while (window.isOpen()) {
         sf::Event event;
@@ -358,7 +372,8 @@ int main()
                 }
                 window.clear(sf::Color::White);
         
-                        
+                
+                
                 window.draw(line);
                 
                 Func.draw_text_input(window);
@@ -384,6 +399,8 @@ int main()
                 draw_axis(window, width, height, true, length, scale, center_x, center_y, font);
                 draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
                 draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, 0, width);
+                
+                window.draw(Box);
             }
             
             sf::Vector2i mousePos = sf::Mouse::getPosition(window);
@@ -400,8 +417,9 @@ int main()
                     if (event.mouseButton.button == sf::Mouse::Left) {
                         //scale = stoi(inputStrScale);
                         window.clear(sf::Color::White);
-        
                         
+                        
+        
                         window.draw(line);
                         
                         Func.draw_text_input(window);
@@ -426,6 +444,8 @@ int main()
                         draw_axis(window, width, height, false, length, scale, center_x, center_y, font);
                         draw_func(window, f, a, b, scale, center_x, center_y, sf::Color::Red, delay, width);
                         
+                        window.draw(Box);
+                        
                     }
                 }
             } else {
@@ -440,6 +460,8 @@ int main()
         Delay.draw_text_input(window);
         A.draw_text_input(window);
         B.draw_text_input(window);
+        window.draw(button);
+        window.draw(text);
         window.display();
     }
 
