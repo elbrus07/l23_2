@@ -191,7 +191,7 @@ void draw_func(sf::RenderWindow &window, double (*func)(double), int a, int b, i
     }
 }
 
-class TextInputX {
+class TextInput {
 private:
     bool active = false;
     string inputStr;
@@ -204,7 +204,7 @@ private:
     sf::RectangleShape inputBox;
     
 public:
-    TextInputX(int x, int y, int w, int h, sf::Font& font, string str = "") {
+    TextInput(int x, int y, int w, int h, sf::Font& font, string str = "") {
         this->x = x;
         this->y = y;
         this->w = w;
@@ -228,6 +228,7 @@ public:
     }
     
     void draw_text_input(sf::RenderWindow &window) {
+        inputText.setString(inputStr);
         window.draw(inputBox);
         window.draw(inputText);
     }
@@ -248,11 +249,9 @@ public:
             char c = event.text.unicode;
 
             // Обработка Backspace
-            if (c == 8 && !inputStr.empty()) { 
+            if ((c == 8 || c == 127) && !inputStr.empty()) { 
                 inputStr.pop_back();
-            }
-            // Обработка допустимых символов (буквы, цифры, пробел)
-            else if (c >= 32 && c <= 126 && inputStr.length() < 16) {
+            } else if (c >= 32 && c <= 126 && inputStr.length() < 16) {
                 inputStr += c;
             }
 
@@ -269,11 +268,6 @@ public:
         return inputStr;
     }
     
-};
-
-class TextInput : public TextInputX {
-public:
-    using TextInputX::TextInputX;
 };
 
 int main()
