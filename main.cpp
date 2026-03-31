@@ -4,6 +4,9 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <thread>
+#include <chrono>
+#include <unistd.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -320,9 +323,11 @@ public:
                     sf::Vertex(p1, colour),
                     sf::Vertex(p2, colour)
                 };
-
+				
                 window.draw(line, 2, sf::Lines);
-               
+                
+                window.display();
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
 
             prevX = x;
