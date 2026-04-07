@@ -2,141 +2,213 @@
 #include <cmath>
 #include <vector>
 #include <string>
-#include <iostream>
+#include <sstream>
+#include <iomanip>
 
-// ==================== КЛАСС ДЛЯ НАСТРОЕК ====================
+// ==================== КЛАСС НАСТРОЕК ====================
 class Settings
 {
 public:
     // Размеры окна
-    int windowWidth = 900;
-    int windowHeight = 600;
+    int windowWidth = 1000;
+    int windowHeight = 700;
     
-    // Положение осей
-    int centerX = 450;
-    int centerY = 300;
+    // Границы отрисовки
+    float xMin = -2 * M_PI;   // Левая граница по X
+    float xMax = 2 * M_PI;    // Правая граница по X
+    float yMin = -1.5f;       // Нижняя граница по Y
+    float yMax = 1.5f;        // Верхняя граница по Y
     
-    // Границы осей
-    int axisStartX = 100;
-    int axisEndX = 800;
-    int axisStartY = 100;
-    int axisEndY = 500;
+    // Отступы для осей (в пикселях)
+    int marginLeft = 80;
+    int marginRight = 80;
+    int marginTop = 60;
+    int marginBottom = 80;
     
-    // Настройки графика
-    float amplitude = 100.0f;
-    float frequency = 0.02f;
+    // Параметры функции
+    float amplitude = 1.0f;
+    float frequency = 1.0f;
     
-    // Настройки анимации
-    float speed = 2.0f;
+    // Настройки анимации (без ограничения скорости)
+    float animationSpeed = 50.0f;  // Точек в секунду (можно очень быстро)
+    
+    // Цвета
+    sf::Color graphColor = sf::Color::Red;
+    sf::Color axesColor = sf::Color::Black;
+    sf::Color gridColor = sf::Color(200, 200, 200);
     
     // Настройки шкалы
-    int scaleStep = 50;
-    int scaleSize = 5;
-    
-    // Настройки текста
-    int textSizeNormal = 16;
-    int textSizeTitle = 20;
-    int textSizeInfo = 14;
+    float xTickStep = M_PI / 2;  // Шаг делений по X (π/2)
+    float yTickStep = 0.5f;       // Шаг делений по Y
 };
 
-// ==================== КЛАСС ДЛЯ ОСЕЙ ====================
-class Axes
+// ==================== КЛАСС ДЛЯ ПРЕОБРАЗОВАНИЯ КООРДИНАТ ====================
+class CoordinateTransformer
+{
+private:
+    Settings& s;
+    float worldToPixelX(float worldX) const
+    {
+        float worldWidth = s.xMax - s.xMin;
+        float pixelWidth = s.windowWidth - s.marginLeft - s.marginRight;
+        return s.marginLeft + (worldX - s.xMin) / worldWidth * pixelWidth;
+    }
+    
+    float worldToPixelY(float worldY) const
+    {
+        float worldHeight = s.yMax - s.yMin;
+        float pixelHeight = s.windowHeight - s.marginTop - s.marginBottom;
+        return s.marginTop + (s.yMax - worldY) / worldHeight * pixelHeight;
+    }
+    
+public:
+    CoordinateTransformer(Settings& settings) : s(settings) {}
+    
+    sf::Vector2f worldToPixel(float worldX, float worldY) const
+    {
+        return sf::Vector2f(worldToPixelX(worldX), worldToPixelY(worldY));
+    }
+    
+    float worldToPixelX(float worldX) const
+    {
+        float worldWidth = s.xMax - s.xMin;
+        float pixelWidth = s.windowWidth - s.marginLeft - s.marginRight;
+        return s.marginLeft + (worldX - s.xMin) / worldWidth * pixelWidth;
+    }
+    
+    float worldToPixelY(float worldY) const
+    {
+        float worldHeight = s.yMax - s.yMin;
+        float pixelHeight = s.windowHeight - s.marginTop - s.marginBottom;
+        return s.marginTop + (s.yMax - worldY) / worldHeight * pixelHeight;
+    }
+    
+    float pixelToWorldX(float pixelX) const
+    {
+        float worldWidth = s.xMax - s.xMin;
+        float pixelWidth = s.windowWidth - s.marginLeft - s.marginRight;
+        return s.xMin + (pixelX - s.marginLeft) / pixelWidth * worldWidth;
+    }
+    
+    float pixelToWorldY(float pixelY) const
+    {
+        float worldHeight = s.yMax - s.yMin;
+        float pixelHeight = s.windowHeight - s.marginTop - s.marginBottom;
+        return s.yMax - (pixelY - s.marginTop) / pixelHeight * worldHeight;
+    }
+};
+
+// ==================== КЛАСС ДЛЯ ОСЕЙ И СЕТКИ ====================
+class AxesAndGrid
 {
 private:
     sf::VertexArray xAxis;
     sf::VertexArray yAxis;
-    std::vector<sf::VertexArray> arrows;
-    sf::VertexArray scale;
+    sf::VertexArray grid;
+    std::vector<sf::VertexArray> xTicks;
+    std::vector<sf::VertexArray> yTicks;
     
-public:
-    Axes(const Settings& s)
+    void updateAxes(const CoordinateTransformer& transformer, const Settings& s)
     {
-        // Создаем ось X
+        // Ось X
+        float yZero = transformer.worldToPixelY(0);
         xAxis = sf::VertexArray(sf::Lines, 2);
-        xAxis[0].position = sf::Vector2f(s.axisStartX, s.centerY);
-        xAxis[0].color = sf::Color::Black;
-        xAxis[1].position = sf::Vector2f(s.axisEndX, s.centerY);
-        xAxis[1].color = sf::Color::Black;
+        xAxis[0].position = sf::Vector2f(s.marginLeft, yZero);
+        xAxis[0].color = s.axesColor;
+        xAxis[1].position = sf::Vector2f(s.windowWidth - s.marginRight, yZero);
+        xAxis[1].color = s.axesColor;
         
-        // Создаем ось Y
+        // Ось Y
+        float xZero = transformer.worldToPixelX(0);
         yAxis = sf::VertexArray(sf::Lines, 2);
-        yAxis[0].position = sf::Vector2f(s.centerX, s.axisStartY);
-        yAxis[0].color = sf::Color::Black;
-        yAxis[1].position = sf::Vector2f(s.centerX, s.axisEndY);
-        yAxis[1].color = sf::Color::Black;
-        
-        // Создаем стрелки
-        createArrows(s);
-        
-        // Создаем шкалу (деления)
-        createScale(s);
+        yAxis[0].position = sf::Vector2f(xZero, s.marginTop);
+        yAxis[0].color = s.axesColor;
+        yAxis[1].position = sf::Vector2f(xZero, s.windowHeight - s.marginBottom);
+        yAxis[1].color = s.axesColor;
     }
     
-    void createArrows(const Settings& s)
+    void updateGrid(const CoordinateTransformer& transformer, const Settings& s)
     {
-        // Стрелка на оси X (справа)
-        sf::VertexArray xArrow1(sf::Lines, 2);
-        xArrow1[0].position = sf::Vector2f(s.axisEndX, s.centerY);
-        xArrow1[0].color = sf::Color::Black;
-        xArrow1[1].position = sf::Vector2f(s.axisEndX - 10, s.centerY - 5);
-        xArrow1[1].color = sf::Color::Black;
-        arrows.push_back(xArrow1);
+        grid = sf::VertexArray(sf::Lines);
         
-        sf::VertexArray xArrow2(sf::Lines, 2);
-        xArrow2[0].position = sf::Vector2f(s.axisEndX, s.centerY);
-        xArrow2[0].color = sf::Color::Black;
-        xArrow2[1].position = sf::Vector2f(s.axisEndX - 10, s.centerY + 5);
-        xArrow2[1].color = sf::Color::Black;
-        arrows.push_back(xArrow2);
+        // Вертикальные линии сетки (по X)
+        for (float x = -10; x <= 10; x += s.xTickStep)
+        {
+            if (x >= s.xMin && x <= s.xMax && std::abs(x) > 0.001f)
+            {
+                float pixelX = transformer.worldToPixelX(x);
+                grid.append(sf::Vertex(sf::Vector2f(pixelX, s.marginTop), s.gridColor));
+                grid.append(sf::Vertex(sf::Vector2f(pixelX, s.windowHeight - s.marginBottom), s.gridColor));
+            }
+        }
         
-        // Стрелка на оси Y (вверху)
-        sf::VertexArray yArrow1(sf::Lines, 2);
-        yArrow1[0].position = sf::Vector2f(s.centerX, s.axisStartY);
-        yArrow1[0].color = sf::Color::Black;
-        yArrow1[1].position = sf::Vector2f(s.centerX - 5, s.axisStartY + 10);
-        yArrow1[1].color = sf::Color::Black;
-        arrows.push_back(yArrow1);
-        
-        sf::VertexArray yArrow2(sf::Lines, 2);
-        yArrow2[0].position = sf::Vector2f(s.centerX, s.axisStartY);
-        yArrow2[0].color = sf::Color::Black;
-        yArrow2[1].position = sf::Vector2f(s.centerX + 5, s.axisStartY + 10);
-        yArrow2[1].color = sf::Color::Black;
-        arrows.push_back(yArrow2);
+        // Горизонтальные линии сетки (по Y)
+        for (float y = -2; y <= 2; y += s.yTickStep)
+        {
+            if (y >= s.yMin && y <= s.yMax && std::abs(y) > 0.001f)
+            {
+                float pixelY = transformer.worldToPixelY(y);
+                grid.append(sf::Vertex(sf::Vector2f(s.marginLeft, pixelY), s.gridColor));
+                grid.append(sf::Vertex(sf::Vector2f(s.windowWidth - s.marginRight, pixelY), s.gridColor));
+            }
+        }
     }
     
-    void createScale(const Settings& s)
+    void updateTicks(const CoordinateTransformer& transformer, const Settings& s)
     {
-        scale = sf::VertexArray(sf::Lines);
+        xTicks.clear();
+        yTicks.clear();
+        
+        int tickLength = 6;
         
         // Деления на оси X
-        for (int x = s.axisStartX; x <= s.axisEndX; x += s.scaleStep)
+        float yAxisPixel = transformer.worldToPixelY(0);
+        for (float x = -10; x <= 10; x += s.xTickStep)
         {
-            if (x != s.centerX)
+            if (x >= s.xMin && x <= s.xMax)
             {
-                scale.append(sf::Vertex(sf::Vector2f(x, s.centerY - s.scaleSize/2), sf::Color::Black));
-                scale.append(sf::Vertex(sf::Vector2f(x, s.centerY + s.scaleSize/2), sf::Color::Black));
+                float pixelX = transformer.worldToPixelX(x);
+                sf::VertexArray tick(sf::Lines, 2);
+                tick[0].position = sf::Vector2f(pixelX, yAxisPixel - tickLength/2);
+                tick[0].color = s.axesColor;
+                tick[1].position = sf::Vector2f(pixelX, yAxisPixel + tickLength/2);
+                tick[1].color = s.axesColor;
+                xTicks.push_back(tick);
             }
         }
         
         // Деления на оси Y
-        for (int y = s.axisStartY; y <= s.axisEndY; y += s.scaleStep)
+        float xAxisPixel = transformer.worldToPixelX(0);
+        for (float y = -2; y <= 2; y += s.yTickStep)
         {
-            if (y != s.centerY)
+            if (y >= s.yMin && y <= s.yMax)
             {
-                scale.append(sf::Vertex(sf::Vector2f(s.centerX - s.scaleSize/2, y), sf::Color::Black));
-                scale.append(sf::Vertex(sf::Vector2f(s.centerX + s.scaleSize/2, y), sf::Color::Black));
+                float pixelY = transformer.worldToPixelY(y);
+                sf::VertexArray tick(sf::Lines, 2);
+                tick[0].position = sf::Vector2f(xAxisPixel - tickLength/2, pixelY);
+                tick[0].color = s.axesColor;
+                tick[1].position = sf::Vector2f(xAxisPixel + tickLength/2, pixelY);
+                tick[1].color = s.axesColor;
+                yTicks.push_back(tick);
             }
         }
     }
     
+public:
+    void update(const CoordinateTransformer& transformer, const Settings& s)
+    {
+        updateAxes(transformer, s);
+        updateGrid(transformer, s);
+        updateTicks(transformer, s);
+    }
+    
     void draw(sf::RenderWindow& window) const
     {
+        window.draw(grid);
         window.draw(xAxis);
         window.draw(yAxis);
-        for (const auto& arrow : arrows)
-            window.draw(arrow);
-        window.draw(scale);
+        for (const auto& tick : xTicks) window.draw(tick);
+        for (const auto& tick : yTicks) window.draw(tick);
     }
 };
 
@@ -146,69 +218,109 @@ class Labels
 private:
     std::vector<sf::Text> labels;
     sf::Font font;
+    Settings& s;
+    CoordinateTransformer& transformer;
     
-public:
-    Labels(const Settings& s)
+    std::string formatNumber(float value)
     {
-        // Загружаем шрифт
-        if (!font.loadFromFile("arial.ttf"))
+        std::stringstream ss;
+        if (std::abs(value - M_PI) < 0.01)
+            return "π";
+        else if (std::abs(value - M_PI/2) < 0.01)
+            return "π/2";
+        else if (std::abs(value + M_PI/2) < 0.01)
+            return "-π/2";
+        else if (std::abs(value - M_PI) < 0.01)
+            return "π";
+        else if (std::abs(value + M_PI) < 0.01)
+            return "-π";
+        else if (std::abs(value - 2*M_PI) < 0.01)
+            return "2π";
+        else if (std::abs(value + 2*M_PI) < 0.01)
+            return "-2π";
+        else if (std::abs(value - 3*M_PI/2) < 0.01)
+            return "3π/2";
+        else if (std::abs(value + 3*M_PI/2) < 0.01)
+            return "-3π/2";
+        else
         {
-            if (!font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"))
-            {
-                std::cout << "Не удалось загрузить шрифт!" << std::endl;
-            }
+            ss << std::fixed << std::setprecision(2) << value;
+            return ss.str();
         }
-        
-        createAllLabels(s);
     }
     
-    sf::Text createText(const std::string& text, int x, int y, int size)
+    sf::Text createText(const std::string& text, float x, float y, int size, sf::Color color = sf::Color::Black)
     {
         sf::Text t;
         t.setFont(font);
         t.setString(text);
         t.setCharacterSize(size);
-        t.setFillColor(sf::Color::Black);
+        t.setFillColor(color);
         t.setPosition(x, y);
         return t;
     }
     
-    void createAllLabels(const Settings& s)
+public:
+    Labels(Settings& settings, CoordinateTransformer& trans) 
+        : s(settings), transformer(trans)
     {
-        // Подписи на оси X (с p вместо π)
-        labels.push_back(createText("O", s.centerX - 10, s.centerY + 5, s.textSizeNormal));
-        labels.push_back(createText("p/2", s.centerX + 90, s.centerY + 5, s.textSizeNormal));
-        labels.push_back(createText("p", s.centerX + 140, s.centerY + 5, s.textSizeNormal));
-        labels.push_back(createText("3p/2", s.centerX + 190, s.centerY + 5, s.textSizeNormal));
-        labels.push_back(createText("2p", s.centerX + 240, s.centerY + 5, s.textSizeNormal));
-        labels.push_back(createText("-p/2", s.centerX - 110, s.centerY + 5, s.textSizeNormal));
-        labels.push_back(createText("-p", s.centerX - 160, s.centerY + 5, s.textSizeNormal));
-        labels.push_back(createText("-3p/2", s.centerX - 210, s.centerY + 5, s.textSizeNormal));
-        labels.push_back(createText("-2p", s.centerX - 260, s.centerY + 5, s.textSizeNormal));
-        
-        // Подписи на оси Y
-        labels.push_back(createText("1", s.centerX + 10, s.centerY - 100, s.textSizeNormal));
-        labels.push_back(createText("1/2", s.centerX + 10, s.centerY - 50, s.textSizeNormal));
-        labels.push_back(createText("0", s.centerX + 10, s.centerY - 5, s.textSizeNormal));
-        labels.push_back(createText("-1/2", s.centerX + 10, s.centerY + 45, s.textSizeNormal));
-        labels.push_back(createText("-1", s.centerX + 10, s.centerY + 95, s.textSizeNormal));
-        
-        // Название графика
-        labels.push_back(createText("y = sin x", s.centerX + 150, s.centerY - 150, s.textSizeTitle));
+        if (!font.loadFromFile("arial.ttf"))
+        {
+            font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+        }
     }
     
-    void addInfoLabels(float speed)
+    void update()
     {
-        // Очищаем старые информационные подписи
-        while (labels.size() > 14) // Оставляем только основные подписи
+        labels.clear();
+        
+        // Подписи на оси X
+        float yZeroPixel = transformer.worldToPixelY(0);
+        for (float x = -10; x <= 10; x += s.xTickStep)
         {
-            labels.pop_back();
+            if (x >= s.xMin && x <= s.xMax && std::abs(x) > 0.001f)
+            {
+                float pixelX = transformer.worldToPixelX(x);
+                std::string label = formatNumber(x);
+                labels.push_back(createText(label, pixelX - 15, yZeroPixel + 5, 14));
+            }
         }
         
-        // Добавляем новые информационные подписи
-        labels.push_back(createText("Speed: " + std::to_string((int)speed), 20, 20, 14));
-        labels.push_back(createText("+ / - : change speed", 20, 40, 14));
-        labels.push_back(createText("SPACE : restart", 20, 60, 14));
+        // Подпись 0
+        float xZeroPixel = transformer.worldToPixelX(0);
+        labels.push_back(createText("0", xZeroPixel - 8, transformer.worldToPixelY(0) + 5, 14));
+        
+        // Подписи на оси Y
+        float xZeroPixelY = transformer.worldToPixelX(0);
+        for (float y = -2; y <= 2; y += s.yTickStep)
+        {
+            if (y >= s.yMin && y <= s.yMax && std::abs(y) > 0.001f)
+            {
+                float pixelY = transformer.worldToPixelY(y);
+                std::string label = formatNumber(y);
+                labels.push_back(createText(label, xZeroPixelY + 8, pixelY - 8, 14));
+            }
+        }
+        
+        // Название функции
+        labels.push_back(createText("y = sin x", s.windowWidth - 150, s.marginTop - 30, 20, sf::Color::Blue));
+        
+        // Информационные подсказки
+        labels.push_back(createText("УПРАВЛЕНИЕ:", 20, 20, 16, sf::Color(100, 100, 100)));
+        labels.push_back(createText("Колесико мыши - масштаб", 20, 45, 14, sf::Color(100, 100, 100)));
+        labels.push_back(createText("Стрелки влево/вправо - движение", 20, 65, 14, sf::Color(100, 100, 100)));
+        labels.push_back(createText("Пробел - перезапустить анимацию", 20, 85, 14, sf::Color(100, 100, 100)));
+        labels.push_back(createText("R - сбросить вид", 20, 105, 14, sf::Color(100, 100, 100)));
+        
+        // Текущий масштаб
+        std::stringstream ss;
+        ss << "Диапазон X: [" << std::fixed << std::setprecision(2) << s.xMin 
+           << ", " << s.xMax << "]";
+        labels.push_back(createText(ss.str(), 20, s.windowHeight - 60, 14, sf::Color(150, 150, 150)));
+        
+        ss.str("");
+        ss << "Диапазон Y: [" << s.yMin << ", " << s.yMax << "]";
+        labels.push_back(createText(ss.str(), 20, s.windowHeight - 40, 14, sf::Color(150, 150, 150)));
     }
     
     void draw(sf::RenderWindow& window) const
@@ -218,7 +330,7 @@ public:
     }
 };
 
-// ==================== КЛАСС ДЛЯ ГРАФИКА ====================
+// ==================== КЛАСС ГРАФИКА ====================
 class Graph
 {
 private:
@@ -227,36 +339,41 @@ private:
     int currentPoint;
     float progress;
     sf::Clock clock;
+    Settings& s;
+    CoordinateTransformer& transformer;
     
 public:
-    Graph(const Settings& s, sf::Color graphColor = sf::Color::Red)
-        : color(graphColor), currentPoint(0), progress(0.0f)
+    Graph(Settings& settings, CoordinateTransformer& trans, sf::Color graphColor = sf::Color::Red)
+        : s(settings), transformer(trans), color(graphColor), currentPoint(0), progress(0.0f)
     {
-        calculateAllPoints(s);
+        calculateAllPoints();
     }
     
-    void calculateAllPoints(const Settings& s)
+    void calculateAllPoints()
     {
         allPoints.clear();
         
-        for (int x = s.axisStartX; x <= s.axisEndX; x++)
+        float step = (s.xMax - s.xMin) / 1000;  // 1000 точек для плавности
+        
+        for (float x = s.xMin; x <= s.xMax; x += step)
         {
-            float rad = (x - s.centerX) * s.frequency;
-            float y = s.centerY - s.amplitude * sin(rad);
+            float y = s.amplitude * sin(s.frequency * x);
             
-            if (y >= s.axisStartY && y <= s.axisEndY)
+            if (y >= s.yMin - 0.5 && y <= s.yMax + 0.5)
             {
-                allPoints.push_back(sf::Vector2f(x, y));
+                sf::Vector2f pixel = transformer.worldToPixel(x, y);
+                allPoints.push_back(pixel);
             }
         }
     }
     
-    void update(float speed)
+    void update()
     {
         float deltaTime = clock.restart().asSeconds();
         
-        progress += deltaTime * speed;
-        int targetPoint = static_cast<int>(progress * 30);
+        // Нет ограничения скорости - можно очень быстро
+        progress += deltaTime * s.animationSpeed;
+        int targetPoint = static_cast<int>(progress);
         
         if (targetPoint > currentPoint)
             currentPoint = targetPoint;
@@ -269,6 +386,13 @@ public:
     {
         currentPoint = 0;
         progress = 0.0f;
+        clock.restart();
+    }
+    
+    void recalculate()
+    {
+        calculateAllPoints();
+        restart();
     }
     
     bool isComplete() const
@@ -298,20 +422,87 @@ public:
 class SinGraphApp
 {
 private:
-    Settings settings;
+    Settings s;
     sf::RenderWindow window;
-    Axes axes;
+    CoordinateTransformer transformer;
+    AxesAndGrid axesAndGrid;
     Labels labels;
     Graph graph;
     
+    bool isDragging;
+    sf::Vector2i lastMousePos;
+    float lastXMin, lastXMax;
+    
+    void handleZoom(float delta, sf::Vector2i mousePos)
+    {
+        // Получаем мировые координаты мыши до зумирования
+        float mouseWorldX = transformer.pixelToWorldX(mousePos.x);
+        
+        // Коэффициент масштабирования
+        float zoomFactor = (delta > 0) ? 0.9f : 1.1f;
+        
+        // Масштабируем X
+        float newWidth = (s.xMax - s.xMin) * zoomFactor;
+        if (newWidth > 0.1f && newWidth < 50.0f)
+        {
+            s.xMin = mouseWorldX - (mouseWorldX - s.xMin) * zoomFactor;
+            s.xMax = s.xMin + newWidth;
+        }
+        
+        // Масштабируем Y (автоматически, чтобы сохранить пропорции)
+        float newHeight = (s.yMax - s.yMin) * zoomFactor;
+        if (newHeight > 0.1f && newHeight < 10.0f)
+        {
+            s.yMin = -newHeight / 2;
+            s.yMax = newHeight / 2;
+        }
+        
+        // Обновляем все
+        updateAll();
+    }
+    
+    void handlePan(float deltaX, float deltaY)
+    {
+        // Перемещаем по X
+        float worldDeltaX = (s.xMax - s.xMin) * (-deltaX / (s.windowWidth - s.marginLeft - s.marginRight));
+        s.xMin += worldDeltaX;
+        s.xMax += worldDeltaX;
+        
+        // Перемещаем по Y
+        float worldDeltaY = (s.yMax - s.yMin) * (deltaY / (s.windowHeight - s.marginTop - s.marginBottom));
+        s.yMin += worldDeltaY;
+        s.yMax += worldDeltaY;
+        
+        updateAll();
+    }
+    
+    void resetView()
+    {
+        s.xMin = -2 * M_PI;
+        s.xMax = 2 * M_PI;
+        s.yMin = -1.5f;
+        s.yMax = 1.5f;
+        updateAll();
+    }
+    
+    void updateAll()
+    {
+        axesAndGrid.update(transformer, s);
+        graph.recalculate();
+        labels.update();
+    }
+    
 public:
     SinGraphApp()
-        : window(sf::VideoMode(settings.windowWidth, settings.windowHeight), "y = sin x - Graph Animation")
-        , axes(settings)
-        , labels(settings)
-        , graph(settings)
+        : window(sf::VideoMode(s.windowWidth, s.windowHeight), "y = sin x - Интерактивный график")
+        , transformer(s)
+        , axesAndGrid()
+        , labels(s, transformer)
+        , graph(s, transformer, s.graphColor)
+        , isDragging(false)
     {
-        window.setFramerateLimit(60);
+        window.setFramerateLimit(120);
+        updateAll();
     }
     
     void handleEvents()
@@ -321,48 +512,98 @@ public:
         {
             if (event.type == sf::Event::Closed)
                 window.close();
+            
+            // Масштабирование колесиком мыши
+            if (event.type == sf::Event::MouseWheelScrolled)
+            {
+                if (event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel)
+                {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                    handleZoom(event.mouseWheelScroll.delta, mousePos);
+                }
+            }
+            
+            // Начало перетаскивания (для движения)
+            if (event.type == sf::Event::MouseButtonPressed)
+            {
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    isDragging = true;
+                    lastMousePos = sf::Mouse::getPosition(window);
+                    lastXMin = s.xMin;
+                    lastXMax = s.xMax;
+                }
+            }
+            
+            // Конец перетаскивания
+            if (event.type == sf::Event::MouseButtonReleased)
+            {
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    isDragging = false;
+                }
+            }
+            
+            // Перетаскивание (движение)
+            if (event.type == sf::Event::MouseMoved && isDragging)
+            {
+                sf::Vector2i currentMousePos = sf::Mouse::getPosition(window);
+                float deltaX = currentMousePos.x - lastMousePos.x;
+                float deltaY = currentMousePos.y - lastMousePos.y;
                 
+                // Перемещаем график
+                float worldDeltaX = (s.xMax - s.xMin) * (-deltaX / (s.windowWidth - s.marginLeft - s.marginRight));
+                float worldDeltaY = (s.yMax - s.yMin) * (deltaY / (s.windowHeight - s.marginTop - s.marginBottom));
+                
+                s.xMin = lastXMin + worldDeltaX;
+                s.xMax = lastXMax + worldDeltaX;
+                s.yMin += worldDeltaY;
+                s.yMax += worldDeltaY;
+                
+                updateAll();
+            }
+            
+            // Клавиатура
             if (event.type == sf::Event::KeyPressed)
             {
-                handleKeyPress(event.key.code);
+                switch (event.key.code)
+                {
+                    case sf::Keyboard::Space:
+                        graph.restart();
+                        break;
+                    case sf::Keyboard::R:
+                        resetView();
+                        graph.restart();
+                        break;
+                    case sf::Keyboard::Left:
+                        handlePan(50, 0);
+                        break;
+                    case sf::Keyboard::Right:
+                        handlePan(-50, 0);
+                        break;
+                    case sf::Keyboard::Up:
+                        handlePan(0, 50);
+                        break;
+                    case sf::Keyboard::Down:
+                        handlePan(0, -50);
+                        break;
+                    default:
+                        break;
+                }
             }
-        }
-    }
-    
-    void handleKeyPress(sf::Keyboard::Key key)
-    {
-        if (key == sf::Keyboard::Equal || key == sf::Keyboard::Add)
-        {
-            settings.speed += 0.5f;
-            if (settings.speed > 10.0f) settings.speed = 10.0f;
-        }
-        else if (key == sf::Keyboard::Hyphen || key == sf::Keyboard::Subtract)
-        {
-            settings.speed -= 0.5f;
-            if (settings.speed < 0.5f) settings.speed = 0.5f;
-        }
-        else if (key == sf::Keyboard::Space)
-        {
-            graph.restart();
-        }
-        else if (key == sf::Keyboard::R)
-        {
-            // Дополнительно: перезапуск с обновлением точек
-            graph.restart();
         }
     }
     
     void update()
     {
-        graph.update(settings.speed);
-        labels.addInfoLabels(settings.speed);
+        graph.update();
     }
     
     void draw()
     {
         window.clear(sf::Color::White);
         
-        axes.draw(window);
+        axesAndGrid.draw(window);
         graph.draw(window);
         labels.draw(window);
         
