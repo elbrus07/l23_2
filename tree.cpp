@@ -7,7 +7,7 @@
 #include <memory>
 
 // ============================================
-// СТРУКТУРА УЗЛА ДЕРЕВА (вместо класса)
+// РЎРўР РЈРљРўРЈР Рђ РЈР—Р›Рђ Р”Р•Р Р•Р’Рђ (РІРјРµСЃС‚Рѕ РєР»Р°СЃСЃР°)
 // ============================================
 
 struct Uzel {
@@ -56,45 +56,45 @@ struct Uzel {
         circle.setRadius(newRadius);
         circle.setOrigin(newRadius, newRadius);
         text.setCharacterSize(static_cast<unsigned int>(newRadius * 0.8f));
-        updateText(data);  // Обновляем позицию текста
+        updateText(data);  // РћР±РЅРѕРІР»СЏРµРј РїРѕР·РёС†РёСЋ С‚РµРєСЃС‚Р°
     }
 };
 
 // ============================================
-// КЛАСС ДВОИЧНОГО ДЕРЕВА ПОИСКА
+// РљР›РђРЎРЎ Р”Р’РћРР§РќРћР“Рћ Р”Р•Р Р•Р’Рђ РџРћРРЎРљРђ
 // ============================================
 
 class BinarySearchTree {
 private:    
-    Uzel* root;     // Корень дерева
+    Uzel* root;     // РљРѕСЂРµРЅСЊ РґРµСЂРµРІР°
     sf::Font* font;
 
-    // Вспомогательные рекурсивные функции
+    // Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ СЂРµРєСѓСЂСЃРёРІРЅС‹Рµ С„СѓРЅРєС†РёРё
     Uzel* insertRecursive(Uzel* node, int value) {
         if (node == nullptr) {
-            return new Uzel(value, *font);     // если узел пуст то создается новый  узел
+            return new Uzel(value, *font);     // РµСЃР»Рё СѓР·РµР» РїСѓСЃС‚ С‚Рѕ СЃРѕР·РґР°РµС‚СЃСЏ РЅРѕРІС‹Р№  СѓР·РµР»
         }
 
         if (value < node->data) {
-            node->left = insertRecursive(node->left, value);    //если новое значение меньше узла то новое значение уходит влево
+            node->left = insertRecursive(node->left, value);    //РµСЃР»Рё РЅРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ РјРµРЅСЊС€Рµ СѓР·Р»Р° С‚Рѕ РЅРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ СѓС…РѕРґРёС‚ РІР»РµРІРѕ
         }
         else if (value > node->data) {
-            node->right = insertRecursive(node->right, value);      //если новое значение больше узла то новое значение уходит вправо
+            node->right = insertRecursive(node->right, value);      //РµСЃР»Рё РЅРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ Р±РѕР»СЊС€Рµ СѓР·Р»Р° С‚Рѕ РЅРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ СѓС…РѕРґРёС‚ РІРїСЂР°РІРѕ
         }
         return node;
     }
 
-    Uzel* findMin(Uzel* node) {     //поиск минимального значения ( самого левого)
+    Uzel* findMin(Uzel* node) {     //РїРѕРёСЃРє РјРёРЅРёРјР°Р»СЊРЅРѕРіРѕ Р·РЅР°С‡РµРЅРёСЏ ( СЃР°РјРѕРіРѕ Р»РµРІРѕРіРѕ)
         while (node && node->left) {
             node = node->left;
         }
         return node;
     }
 
-        //рекурсивное удаление
+        //СЂРµРєСѓСЂСЃРёРІРЅРѕРµ СѓРґР°Р»РµРЅРёРµ
     Uzel* removeRecursive(Uzel* node, int value) {
         if (node == nullptr) {
-            return nullptr; //// Элемент не найден
+            return nullptr; //// Р­Р»РµРјРµРЅС‚ РЅРµ РЅР°Р№РґРµРЅ
         }
 
         if (value < node->data) {
@@ -104,21 +104,21 @@ private:
             node->right = removeRecursive(node->right, value);
         }
         else {
-            // Нашли узел для удаления
-            // первый случай Нет левого ребенка (Правый ребенок встает на место удаляемого)
+            // РќР°С€Р»Рё СѓР·РµР» РґР»СЏ СѓРґР°Р»РµРЅРёСЏ
+            // РїРµСЂРІС‹Р№ СЃР»СѓС‡Р°Р№ РќРµС‚ Р»РµРІРѕРіРѕ СЂРµР±РµРЅРєР° (РџСЂР°РІС‹Р№ СЂРµР±РµРЅРѕРє РІСЃС‚Р°РµС‚ РЅР° РјРµСЃС‚Рѕ СѓРґР°Р»СЏРµРјРѕРіРѕ)
             if (node->left == nullptr) {
                 Uzel* temp = node->right;
                 delete node;
                 return temp;
             }
-            // второй случай Нет правого ребенка(Левый ребенок встает на место)
+            // РІС‚РѕСЂРѕР№ СЃР»СѓС‡Р°Р№ РќРµС‚ РїСЂР°РІРѕРіРѕ СЂРµР±РµРЅРєР°(Р›РµРІС‹Р№ СЂРµР±РµРЅРѕРє РІСЃС‚Р°РµС‚ РЅР° РјРµСЃС‚Рѕ)
             else if (node->right == nullptr) {
                 Uzel* temp = node->left;
                 delete node;
                 return temp;
             }
 
-            // третий случай оба ребенка существуют (Находим минимум справа, копируем значение, удаляем минимум)
+            // С‚СЂРµС‚РёР№ СЃР»СѓС‡Р°Р№ РѕР±Р° СЂРµР±РµРЅРєР° СЃСѓС‰РµСЃС‚РІСѓСЋС‚ (РќР°С…РѕРґРёРј РјРёРЅРёРјСѓРј СЃРїСЂР°РІР°, РєРѕРїРёСЂСѓРµРј Р·РЅР°С‡РµРЅРёРµ, СѓРґР°Р»СЏРµРј РјРёРЅРёРјСѓРј)
             Uzel* minNode = findMin(node->right);
             node->data = minNode->data;
             node->right = removeRecursive(node->right, minNode->data);
@@ -126,12 +126,12 @@ private:
         return node;
     }
 
-    //поиск
+    //РїРѕРёСЃРє
     bool searchRecursive(Uzel* node, int value) const {
-        if (node == nullptr) return false; //Не нашли
-        if (value == node->data) return true;       // Нашли
-        if (value < node->data) return searchRecursive(node->left, value);  // Ищем слева
-        return searchRecursive(node->right, value);     // Ищем справа
+        if (node == nullptr) return false; //РќРµ РЅР°С€Р»Рё
+        if (value == node->data) return true;       // РќР°С€Р»Рё
+        if (value < node->data) return searchRecursive(node->left, value);  // РС‰РµРј СЃР»РµРІР°
+        return searchRecursive(node->right, value);     // РС‰РµРј СЃРїСЂР°РІР°
     }
 
     void clearRecursive(Uzel* node) {
@@ -153,7 +153,7 @@ private:
         return 1 + std::max(getHeightRecursive(node->left), getHeightRecursive(node->right));
     }
 
-    // Функция для получения количества узлов на каждом уровне
+    // Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РєРѕР»РёС‡РµСЃС‚РІР° СѓР·Р»РѕРІ РЅР° РєР°Р¶РґРѕРј СѓСЂРѕРІРЅРµ
     void getNodesPerLevel(Uzel* node, int level, std::vector<int>& nodesPerLevel) const {
         if (node == nullptr) return;
 
@@ -167,32 +167,32 @@ private:
     }
 
 public:
-    BinarySearchTree(sf::Font& f) : root(nullptr), font(&f) {}   // создаем пустое дерево и передаем шрифт
+    BinarySearchTree(sf::Font& f) : root(nullptr), font(&f) {}   // СЃРѕР·РґР°РµРј РїСѓСЃС‚РѕРµ РґРµСЂРµРІРѕ Рё РїРµСЂРµРґР°РµРј С€СЂРёС„С‚
 
-    ~BinarySearchTree() {   // очищаем память
+    ~BinarySearchTree() {   // РѕС‡РёС‰Р°РµРј РїР°РјСЏС‚СЊ
         clear();
     }
 
-    void insert(int value) {    //Добавляет число в дерево
+    void insert(int value) {    //Р”РѕР±Р°РІР»СЏРµС‚ С‡РёСЃР»Рѕ РІ РґРµСЂРµРІРѕ
         root = insertRecursive(root, value);
     }
 
-    bool remove(int value) {    //Удаляет число из дерева
+    bool remove(int value) {    //РЈРґР°Р»СЏРµС‚ С‡РёСЃР»Рѕ РёР· РґРµСЂРµРІР°
         if (!search(value)) return false;
         root = removeRecursive(root, value);
         return true;
     }
 
-    bool search(int value) const {  //Проверяет, есть ли число
+    bool search(int value) const {  //РџСЂРѕРІРµСЂСЏРµС‚, РµСЃС‚СЊ Р»Рё С‡РёСЃР»Рѕ
         return searchRecursive(root, value);
     }
 
-    void clear() {      //Удаляет все узлы
+    void clear() {      //РЈРґР°Р»СЏРµС‚ РІСЃРµ СѓР·Р»С‹
         clearRecursive(root);
         root = nullptr;
     }
 
-    bool isEmpty() const {      //Проверяет, пустое ли дерево
+    bool isEmpty() const {      //РџСЂРѕРІРµСЂСЏРµС‚, РїСѓСЃС‚РѕРµ Р»Рё РґРµСЂРµРІРѕ
         return root == nullptr;
     }
 
@@ -202,7 +202,7 @@ public:
         return result;
     }
 
-    int getHeight() const {     //Возвращает высоту дерева
+    int getHeight() const {     //Р’РѕР·РІСЂР°С‰Р°РµС‚ РІС‹СЃРѕС‚Сѓ РґРµСЂРµРІР°
         return getHeightRecursive(root);
     }
 
@@ -210,7 +210,7 @@ public:
         return root;
     }
 
-    // Получить максимальное количество узлов на одном уровне (Возвращает максимум узлов на одном уровне)
+    // РџРѕР»СѓС‡РёС‚СЊ РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СѓР·Р»РѕРІ РЅР° РѕРґРЅРѕРј СѓСЂРѕРІРЅРµ (Р’РѕР·РІСЂР°С‰Р°РµС‚ РјР°РєСЃРёРјСѓРј СѓР·Р»РѕРІ РЅР° РѕРґРЅРѕРј СѓСЂРѕРІРЅРµ)
     int getMaxNodesOnLevel() const {
         std::vector<int> nodesPerLevel;
         getNodesPerLevel(root, 0, nodesPerLevel);
@@ -224,7 +224,7 @@ public:
 };
 
 // ============================================
-// КЛАСС ДЛЯ ВИЗУАЛИЗАЦИИ ДЕРЕВА (С АДАПТИВНЫМ РАССТОЯНИЕМ)
+// РљР›РђРЎРЎ Р”Р›РЇ Р’РР—РЈРђР›РР—РђР¦РР Р”Р•Р Р•Р’Рђ (РЎ РђР”РђРџРўРР’РќР«Рњ Р РђРЎРЎРўРћРЇРќРР•Рњ)
 // ============================================
 
 class TreeVisualizer {
@@ -232,14 +232,14 @@ private:
     sf::RenderWindow& window;
     sf::Font& font;
     float RADIUS;
-    float LEVEL_HEIGHT;  // Расстояние между уровнями
-    float HORIZONTAL_FACTOR; //коэффициент горизонтального расстояния
-    float START_X;       // Начальная X координата (центр окна)
-    float START_Y;        // Начальная Y координата
+    float LEVEL_HEIGHT;  // Р Р°СЃСЃС‚РѕСЏРЅРёРµ РјРµР¶РґСѓ СѓСЂРѕРІРЅСЏРјРё
+    float HORIZONTAL_FACTOR; //РєРѕСЌС„С„РёС†РёРµРЅС‚ РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРіРѕ СЂР°СЃСЃС‚РѕСЏРЅРёСЏ
+    float START_X;       // РќР°С‡Р°Р»СЊРЅР°СЏ X РєРѕРѕСЂРґРёРЅР°С‚Р° (С†РµРЅС‚СЂ РѕРєРЅР°)
+    float START_Y;        // РќР°С‡Р°Р»СЊРЅР°СЏ Y РєРѕРѕСЂРґРёРЅР°С‚Р°
 
-    // Функция для расчета размера в зависимости от глубины
+    // Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЂР°СЃС‡РµС‚Р° СЂР°Р·РјРµСЂР° РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РіР»СѓР±РёРЅС‹
     void calculateScale(int treeHeight) {
-        // Чем выше дерево, тем меньше элементы
+        // Р§РµРј РІС‹С€Рµ РґРµСЂРµРІРѕ, С‚РµРј РјРµРЅСЊС€Рµ СЌР»РµРјРµРЅС‚С‹
         if (treeHeight <= 4) {
             RADIUS = 25.0f;
             LEVEL_HEIGHT = 70.0f;
@@ -247,19 +247,19 @@ private:
             START_X = 500.0f;
             START_Y = 80.0f;
         } else if (treeHeight <= 6) {
-            RADIUS = 20.0f;      // меньше кружки
+            RADIUS = 20.0f;      // РјРµРЅСЊС€Рµ РєСЂСѓР¶РєРё
             LEVEL_HEIGHT = 55.0f;
-            HORIZONTAL_FACTOR = 0.8f;// меньше расстояние
+            HORIZONTAL_FACTOR = 0.8f;// РјРµРЅСЊС€Рµ СЂР°СЃСЃС‚РѕСЏРЅРёРµ
             START_X = 500.0f;
             START_Y = 60.0f;
         } else if (treeHeight <= 8) {
-            RADIUS = 16.0f;      // еще меньше
+            RADIUS = 16.0f;      // РµС‰Рµ РјРµРЅСЊС€Рµ
             LEVEL_HEIGHT = 45.0f;
             HORIZONTAL_FACTOR = 0.65f;
             START_X = 500.0f;
             START_Y = 50.0f;
         } else {
-            RADIUS = 12.0f;      // самые маленькие
+            RADIUS = 12.0f;      // СЃР°РјС‹Рµ РјР°Р»РµРЅСЊРєРёРµ
             LEVEL_HEIGHT = 35.0f;
             HORIZONTAL_FACTOR = 0.5f;
             START_X = 500.0f;
@@ -267,14 +267,14 @@ private:
         }
     }
 
-    // Получение максимальной глубины дерева
+    // РџРѕР»СѓС‡РµРЅРёРµ РјР°РєСЃРёРјР°Р»СЊРЅРѕР№ РіР»СѓР±РёРЅС‹ РґРµСЂРµРІР°
     int getMaxLevel(Uzel* node, int level = 0) {
         if (node == nullptr) return level;
         return std::max(getMaxLevel(node->left, level + 1),
             getMaxLevel(node->right, level + 1));
     }
 
-    // Расчет позиций узлов 
+    // Р Р°СЃС‡РµС‚ РїРѕР·РёС†РёР№ СѓР·Р»РѕРІ 
     void calculatePositions(Uzel* node, int x, int y, int xBaseOffset, int level) {
         if (node == nullptr) return;
 
@@ -282,12 +282,12 @@ private:
 
         int xOffset = xBaseOffset;
 
-        // Увеличиваем смещение для каждого уровня
+        // РЈРІРµР»РёС‡РёРІР°РµРј СЃРјРµС‰РµРЅРёРµ РґР»СЏ РєР°Р¶РґРѕРіРѕ СѓСЂРѕРІРЅСЏ
         for (int i = 0; i < level; i++) {
             xOffset = xOffset * 2 + xBaseOffset;
         }
 
-        //  Смещение зависит от RADIUS
+        //  РЎРјРµС‰РµРЅРёРµ Р·Р°РІРёСЃРёС‚ РѕС‚ RADIUS
         float horizontalShift = xOffset * (RADIUS / 25.0f) * HORIZONTAL_FACTOR;
 
         if (node->left) {
@@ -298,13 +298,13 @@ private:
         }
     }
 
-    // Рисование связей (линий) 
+    // Р РёСЃРѕРІР°РЅРёРµ СЃРІСЏР·РµР№ (Р»РёРЅРёР№) 
     void drawLines(Uzel* node) {
         if (node == nullptr) return;
 
         sf::VertexArray lines(sf::Lines);
 
-        //  Толщина линии зависит от RADIUS
+        //  РўРѕР»С‰РёРЅР° Р»РёРЅРёРё Р·Р°РІРёСЃРёС‚ РѕС‚ RADIUS
         float lineThickness = RADIUS / 12.5f;
 
         if (node->left) {
@@ -322,7 +322,7 @@ private:
         }
     }
 
-    // Рисование узлов
+    // Р РёСЃРѕРІР°РЅРёРµ СѓР·Р»РѕРІ
     void drawNodes(Uzel* node) {
         if (node == nullptr) return;
 
@@ -337,18 +337,18 @@ public:
     TreeVisualizer(sf::RenderWindow& win, sf::Font& f) : window(win), font(f), RADIUS(25), LEVEL_HEIGHT(70), HORIZONTAL_FACTOR(1.0f), START_X(500), START_Y(80) {}
 
 
-    // Обновление размеров всех узлов
+    // РћР±РЅРѕРІР»РµРЅРёРµ СЂР°Р·РјРµСЂРѕРІ РІСЃРµС… СѓР·Р»РѕРІ
     void updateNodesSize(Uzel* node) {
         if (node == nullptr) return;
 
-        // Обновляем кружок
+        // РћР±РЅРѕРІР»СЏРµРј РєСЂСѓР¶РѕРє
         node->circle.setRadius(RADIUS);
         node->circle.setOrigin(RADIUS, RADIUS);
 
-        // Обновляем текст
+        // РћР±РЅРѕРІР»СЏРµРј С‚РµРєСЃС‚
         node->text.setCharacterSize(static_cast<unsigned int>(RADIUS * 0.8f));
 
-        // Рекурсивно обновляем детей
+        // Р РµРєСѓСЂСЃРёРІРЅРѕ РѕР±РЅРѕРІР»СЏРµРј РґРµС‚РµР№
         updateNodesSize(node->left);
         updateNodesSize(node->right);
     }
@@ -365,35 +365,35 @@ public:
             window.draw(emptyText);
             return;
         }
-        // Получаем высоту дерева
+        // РџРѕР»СѓС‡Р°РµРј РІС‹СЃРѕС‚Сѓ РґРµСЂРµРІР°
         int treeHeight = tree.getHeight();
 
-        //  расчитываем масштаб  в зависимости от высоты
+        //  СЂР°СЃС‡РёС‚С‹РІР°РµРј РјР°СЃС€С‚Р°Р±  РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РІС‹СЃРѕС‚С‹
         calculateScale(treeHeight);
 
-        // Обновляем размеры кружков у всех узлов
+        // РћР±РЅРѕРІР»СЏРµРј СЂР°Р·РјРµСЂС‹ РєСЂСѓР¶РєРѕРІ Сѓ РІСЃРµС… СѓР·Р»РѕРІ
         updateNodesSize(root);
 
-        // Получаем максимальную глубину дерева
+        // РџРѕР»СѓС‡Р°РµРј РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ РіР»СѓР±РёРЅСѓ РґРµСЂРµРІР°
         int level = getMaxLevel(root);
 
-        // Базовое смещение 
+        // Р‘Р°Р·РѕРІРѕРµ СЃРјРµС‰РµРЅРёРµ 
         int baseOffset = (treeHeight <= 4) ? 4 : (treeHeight <= 6) ? 6 : (treeHeight <= 8) ? 8 : 10;
         baseOffset = static_cast<int>(baseOffset * HORIZONTAL_FACTOR);
 
-        // Рассчитываем позиции (начальная позиция в центре окна)
+        // Р Р°СЃСЃС‡РёС‚С‹РІР°РµРј РїРѕР·РёС†РёРё (РЅР°С‡Р°Р»СЊРЅР°СЏ РїРѕР·РёС†РёСЏ РІ С†РµРЅС‚СЂРµ РѕРєРЅР°)
         calculatePositions(root, START_X, START_Y, baseOffset, level);
 
-        // Рисуем линии
+        // Р РёСЃСѓРµРј Р»РёРЅРёРё
         drawLines(root);
 
-        // Рисуем узлы
+        // Р РёСЃСѓРµРј СѓР·Р»С‹
         drawNodes(root);
     }
 };
 
 // ============================================
-// КЛАСС ПОЛЬЗОВАТЕЛЬСКОГО ИНТЕРФЕЙСА
+// РљР›РђРЎРЎ РџРћР›Р¬Р—РћР’РђРўР•Р›Р¬РЎРљРћР“Рћ РРќРўР•Р Р¤Р•Р™РЎРђ
 // ============================================
 
 class UI {
@@ -427,42 +427,42 @@ public:
         inputBo.setOutlineThickness(1);
         
 
-        // Поле ввода
+        // РџРѕР»Рµ РІРІРѕРґР°
         inputBox.setSize(sf::Vector2f(150, 30));
         inputBox.setPosition(1225, 50);
         inputBox.setFillColor(sf::Color::White);
         inputBox.setOutlineColor(sf::Color::Black);
         inputBox.setOutlineThickness(2);
 
-        // Кнопка ADD
+        // РљРЅРѕРїРєР° ADD
         addButton.setSize(sf::Vector2f(80, 30));
         addButton.setPosition(1250, 100);
         addButton.setFillColor(sf::Color::White);
         addButton.setOutlineColor(sf::Color::Black);
         addButton.setOutlineThickness(1);
 
-        // Кнопка REMOVE
+        // РљРЅРѕРїРєР° REMOVE
         removeButton.setSize(sf::Vector2f(80, 40));
         removeButton.setPosition(1250, 150);
         removeButton.setFillColor(sf::Color::White);
         removeButton.setOutlineColor(sf::Color::Black);
         removeButton.setOutlineThickness(1);
 
-        // Кнопка SEARCH
+        // РљРЅРѕРїРєР° SEARCH
         searchButton.setSize(sf::Vector2f(80, 40));
         searchButton.setPosition(1250,200);
         searchButton.setFillColor(sf::Color::White);
         searchButton.setOutlineColor(sf::Color::Black);
         searchButton.setOutlineThickness(1);
 
-        // Кнопка CLEAR
+        // РљРЅРѕРїРєР° CLEAR
         clearButton.setSize(sf::Vector2f(80, 40));
         clearButton.setPosition(1250, 250);
         clearButton.setFillColor(sf::Color::White);
         clearButton.setOutlineColor(sf::Color::Black);
         clearButton.setOutlineThickness(1);
 
-        // Тексты на кнопках
+        // РўРµРєСЃС‚С‹ РЅР° РєРЅРѕРїРєР°С…
         addText.setFont(font);
         addText.setString("ADD");
         addText.setCharacterSize(16);
@@ -487,19 +487,19 @@ public:
         clearText.setFillColor(sf::Color::Black);
         clearText.setPosition(1250, 250);
 
-        // Поле для ввода текста
+        // РџРѕР»Рµ РґР»СЏ РІРІРѕРґР° С‚РµРєСЃС‚Р°
         inputText.setFont(font);
         inputText.setCharacterSize(16);
         inputText.setFillColor(sf::Color::Black);
         inputText.setPosition(1225, 50);
 
-        // Текст статуса
+        // РўРµРєСЃС‚ СЃС‚Р°С‚СѓСЃР°
         statusText.setFont(font);
         statusText.setCharacterSize(16);
         statusText.setFillColor(sf::Color::Blue);
         statusText.setPosition(125, 110);
 
-        // Заголовок
+        // Р—Р°РіРѕР»РѕРІРѕРє
         titleText.setFont(font);
         titleText.setString("Binary Search Tree Visualizer");
         titleText.setCharacterSize(24);
@@ -510,11 +510,11 @@ public:
     }
 
     void handleEvent(const sf::Event& event, BinarySearchTree& tree) {
-        // Обработка кликов мыши
+        // РћР±СЂР°Р±РѕС‚РєР° РєР»РёРєРѕРІ РјС‹С€Рё
         if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
             sf::Vector2i mousePos(event.mouseButton.x, event.mouseButton.y);
 
-            // Проверка клика по полю ввода
+            // РџСЂРѕРІРµСЂРєР° РєР»РёРєР° РїРѕ РїРѕР»СЋ РІРІРѕРґР°
             if (inputBox.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                 isActive = true;
                 inputText.setFillColor(sf::Color::Black);
@@ -523,7 +523,7 @@ public:
                 isActive = false;
             }
 
-            // Проверка клика по кнопке ADD
+            // РџСЂРѕРІРµСЂРєР° РєР»РёРєР° РїРѕ РєРЅРѕРїРєРµ ADD
             if (addButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                 if (!currentInput.empty()) {
                     int value = std::stoi(currentInput);
@@ -536,7 +536,7 @@ public:
                 }
             }
 
-            // Проверка клика по кнопке REMOVE
+            // РџСЂРѕРІРµСЂРєР° РєР»РёРєР° РїРѕ РєРЅРѕРїРєРµ REMOVE
             if (removeButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                 if (!currentInput.empty()) {
                     int value = std::stoi(currentInput);
@@ -554,7 +554,7 @@ public:
                 }
             }
 
-            // Проверка клика по кнопке SEARCH
+            // РџСЂРѕРІРµСЂРєР° РєР»РёРєР° РїРѕ РєРЅРѕРїРєРµ SEARCH
             if (searchButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                 if (!currentInput.empty()) {
                     int value = std::stoi(currentInput);
@@ -572,7 +572,7 @@ public:
                 }
             }
 
-            // Проверка клика по кнопке CLEAR
+            // РџСЂРѕРІРµСЂРєР° РєР»РёРєР° РїРѕ РєРЅРѕРїРєРµ CLEAR
             if (clearButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                 tree.clear();
                 statusText.setString("derevo ochisheno!");
@@ -583,7 +583,7 @@ public:
             }
         }
 
-        // Обработка ввода текста
+        // РћР±СЂР°Р±РѕС‚РєР° РІРІРѕРґР° С‚РµРєСЃС‚Р°
         if (isActive && event.type == sf::Event::TextEntered) {
             if (event.text.unicode == 8) { // Backspace
                 if (!currentInput.empty()) {
@@ -602,14 +602,14 @@ public:
                     inputText.setString("");
                 }
             }
-            else if (event.text.unicode >= '0' && event.text.unicode <= '9') { // Только цифры
+            else if (event.text.unicode >= '0' && event.text.unicode <= '9') { // РўРѕР»СЊРєРѕ С†РёС„СЂС‹
                 currentInput += static_cast<char>(event.text.unicode);
                 inputText.setString(currentInput);
                 inputText.setFillColor(sf::Color::Black);
             }
         }
 
-        // Сброс цвета статуса через 2 секунды
+        // РЎР±СЂРѕСЃ С†РІРµС‚Р° СЃС‚Р°С‚СѓСЃР° С‡РµСЂРµР· 2 СЃРµРєСѓРЅРґС‹
         if (statusClock.getElapsedTime().asSeconds() > 2.0f) {
             statusText.setFillColor(sf::Color::Blue);
         }
@@ -631,7 +631,7 @@ public:
         window.draw(statusText);
 
 
-        // Отображаем подсказку в поле ввода
+        // РћС‚РѕР±СЂР°Р¶Р°РµРј РїРѕРґСЃРєР°Р·РєСѓ РІ РїРѕР»Рµ РІРІРѕРґР°
         if (currentInput.empty() && !isActive) {
             sf::Text hint;
             hint.setFont(font);
@@ -648,15 +648,15 @@ public:
 };
 
 // ============================================
-// ГЛАВНАЯ ФУНКЦИЯ
+// Р“Р›РђР’РќРђРЇ Р¤РЈРќРљР¦РРЇ
 // ============================================
 
 int main() {
-    // Создаем окно SFML
+    // РЎРѕР·РґР°РµРј РѕРєРЅРѕ SFML
     sf::RenderWindow window(sf::VideoMode(1400, 700), "Binary Search Tree Visualizer");
     window.setFramerateLimit(60);
 
-    // Загружаем шрифт
+    // Р—Р°РіСЂСѓР¶Р°РµРј С€СЂРёС„С‚
     sf::Font font;
     if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
         font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
@@ -665,23 +665,23 @@ int main() {
         font.loadFromFile("C:/Windows/Fonts/arial.ttf");
     }
 
-    // Создаем объекты
+    // РЎРѕР·РґР°РµРј РѕР±СЉРµРєС‚С‹
     BinarySearchTree tree(font);
     TreeVisualizer visualizer(window, font);
     UI ui(font);
 
-    // Добавляем начальные элементы для демонстрации
-    std::cout << "Добавляем начальные элементы: ";
+    // Р”РѕР±Р°РІР»СЏРµРј РЅР°С‡Р°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†РёРё
+    std::cout << "Р”РѕР±Р°РІР»СЏРµРј РЅР°С‡Р°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹: ";
     std::vector<int> initialValues = { 50, 30, 70, 20, 40, 60, 80, 35, 65, 55, 75, 25, 45 };
     for (int val : initialValues) {
         tree.insert(val);
         std::cout << val << " ";
     }
     std::cout << std::endl;
-    std::cout << "Высота дерева: " << tree.getHeight() << std::endl;
-    std::cout << "Максимум узлов на уровне: " << tree.getMaxNodesOnLevel() << std::endl;
+    std::cout << "Р’С‹СЃРѕС‚Р° РґРµСЂРµРІР°: " << tree.getHeight() << std::endl;
+    std::cout << "РњР°РєСЃРёРјСѓРј СѓР·Р»РѕРІ РЅР° СѓСЂРѕРІРЅРµ: " << tree.getMaxNodesOnLevel() << std::endl;
 
-    // Главный цикл
+    // Р“Р»Р°РІРЅС‹Р№ С†РёРєР»
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -691,8 +691,8 @@ int main() {
             ui.handleEvent(event, tree);
         }
 
-        // Отрисовка
-        window.clear(sf::Color(240, 240, 240)); // Светло-серый фон
+        // РћС‚СЂРёСЃРѕРІРєР°
+        window.clear(sf::Color(240, 240, 240)); // РЎРІРµС‚Р»Рѕ-СЃРµСЂС‹Р№ С„РѕРЅ
 
         visualizer.draw(tree);
         ui.draw(window);
