@@ -75,6 +75,14 @@ void preorder(Node* root)
     preorder(root->right);
 }
 
+void inorder(Node* root)
+{
+    if (!root) return;
+    inorder(root->left);
+    cout << root->value << " ";
+    inorder(root->right);
+}
+
 // ===== BFS =====
 void bfs(Node* root)
 {
@@ -133,6 +141,9 @@ int main()
 
     cout << "\nDFS: ";
     preorder(root);
+
+    cout << "\ninorder: ";
+    inorder(root);
 
     cout << "\nBFS: ";
     bfs(root);
