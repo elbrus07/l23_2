@@ -389,7 +389,7 @@ private:
     
     void updateUI() {
         //обновляем интерфейс
-        scoreText.setString("Score: " + std::to_string(board.getScore()));
+        scoreText.setString("Счёт: " + std::to_string(board.getScore()));
     }
     
     void processEvents() {
