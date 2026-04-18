@@ -6,9 +6,9 @@
 #include <sstream>
 #include <memory>
 
-
-// СТРУКТУРА УЗЛА ДЕРЕВА 
-
+// ============================================
+// СТРУКТУРА УЗЛА ДЕРЕВА (вместо класса)
+// ============================================
 
 struct Uzel {
     int data;
@@ -56,13 +56,15 @@ struct Uzel {
         circle.setRadius(newRadius);
         circle.setOrigin(newRadius, newRadius);
         text.setCharacterSize(static_cast<unsigned int>(newRadius * 0.8f));
+        sf::Vector2f currentPos = circle.getPosition();
+        text.setPosition(currentPos);
         updateText(data);  // Обновляем позицию текста
     }
 };
 
-
+// ============================================
 // КЛАСС ДВОИЧНОГО ДЕРЕВА ПОИСКА
-
+// ============================================
 
 class BinarySearchTree {
 private:    
@@ -105,6 +107,11 @@ private:
         }
         else {
             // Нашли узел для удаления
+            // нет детей
+            if (node->left == nullptr && node->right == nullptr) {
+                delete node;
+                return nullptr;  
+            }
             // первый случай Нет левого ребенка (Правый ребенок встает на место удаляемого)
             if (node->left == nullptr) {
                 Uzel* temp = node->right;
@@ -120,7 +127,7 @@ private:
 
             // третий случай оба ребенка существуют (Находим минимум справа, копируем значение, удаляем минимум)
             Uzel* minNode = findMin(node->right);
-            node->data = minNode->data;
+            node->setData(minNode->data);
             node->right = removeRecursive(node->right, minNode->data);
         }
         return node;
@@ -164,6 +171,32 @@ private:
 
         getNodesPerLevel(node->left, level + 1, nodesPerLevel);
         getNodesPerLevel(node->right, level + 1, nodesPerLevel);
+    }
+
+    // Вращение влево
+    Uzel* rotateLeft(Uzel* node) {
+        if (node == nullptr || node->right == nullptr) {
+            return node; // Нельзя вращать
+        }
+
+        Uzel* newRoot = node->right;           // Правый ребенок становится новым корнем
+        node->right = newRoot->left;           // Левое поддерево нового корня переходит вправо
+        newRoot->left = node;                  // Старый корень становится левым ребенком
+
+        return newRoot;
+    }
+
+    // Вращение вправо
+    Uzel* rotateRight(Uzel* node) {
+        if (node == nullptr || node->left == nullptr) {
+            return node; // Нельзя вращать
+        }
+
+        Uzel* newRoot = node->left;            // Левый ребенок становится новым корнем
+        node->left = newRoot->right;           // Правое поддерево нового корня переходит влево
+        newRoot->right = node;                 // Старый корень становится правым ребенком
+
+        return newRoot;
     }
 
 public:
@@ -221,11 +254,28 @@ public:
         }
         return maxNodes;
     }
+
+    // методы для вращения корня
+    bool rotateLeftRoot() {
+        if (root == nullptr || root->right == nullptr) {
+            return false; // Нельзя вращать
+        }
+        root = rotateLeft(root);
+        return true;
+    }
+
+    bool rotateRightRoot() {
+        if (root == nullptr || root->left == nullptr) {
+            return false; // Нельзя вращать
+        }
+        root = rotateRight(root);
+        return true;
+    }
 };
 
-
+// ============================================
 // КЛАСС ДЛЯ ВИЗУАЛИЗАЦИИ ДЕРЕВА (С АДАПТИВНЫМ РАССТОЯНИЕМ)
-
+// ============================================
 
 class TreeVisualizer {
 private:
@@ -236,6 +286,7 @@ private:
     float HORIZONTAL_FACTOR; //коэффициент горизонтального расстояния
     float START_X;       // Начальная X координата (центр окна)
     float START_Y;        // Начальная Y координата
+    bool needRedraw;
 
     // Функция для расчета размера в зависимости от глубины
     void calculateScale(int treeHeight) {
@@ -270,6 +321,7 @@ private:
     // Получение максимальной глубины дерева
     int getMaxLevel(Uzel* node, int level = 0) {
         if (node == nullptr) return level;
+        
         return std::max(getMaxLevel(node->left, level + 1),
             getMaxLevel(node->right, level + 1));
     }
@@ -278,7 +330,9 @@ private:
     void calculatePositions(Uzel* node, int x, int y, int xBaseOffset, int level) {
         if (node == nullptr) return;
 
-        node->setPosition(x, y);
+        if (node != nullptr) {
+            node->setPosition(x, y);
+        }
 
         int xOffset = xBaseOffset;
 
@@ -308,16 +362,20 @@ private:
         float lineThickness = RADIUS / 12.5f;
 
         if (node->left) {
-            lines.append(sf::Vertex(node->circle.getPosition(), sf::Color::Black));
-            lines.append(sf::Vertex(node->left->circle.getPosition(), sf::Color::Black));
-            window.draw(lines);
+            if (node->left != nullptr) {
+                lines.append(sf::Vertex(node->circle.getPosition(), sf::Color::Black));
+                lines.append(sf::Vertex(node->left->circle.getPosition(), sf::Color::Black));
+                window.draw(lines);
+            }
             drawLines(node->left);
         }
 
         if (node->right) {
-            lines.append(sf::Vertex(node->circle.getPosition(), sf::Color::Black));
-            lines.append(sf::Vertex(node->right->circle.getPosition(), sf::Color::Black));
-            window.draw(lines);
+            if (node->right != nullptr) {
+                lines.append(sf::Vertex(node->circle.getPosition(), sf::Color::Black));
+                lines.append(sf::Vertex(node->right->circle.getPosition(), sf::Color::Black));
+                window.draw(lines);
+            }
             drawLines(node->right);
         }
     }
@@ -326,27 +384,33 @@ private:
     void drawNodes(Uzel* node) {
         if (node == nullptr) return;
 
-        window.draw(node->circle);
-        window.draw(node->text);
-
+        if (node != nullptr) {
+            window.draw(node->circle);
+            window.draw(node->text);
+        }
         drawNodes(node->left);
         drawNodes(node->right);
     }
 
 public:
-    TreeVisualizer(sf::RenderWindow& win, sf::Font& f) : window(win), font(f), RADIUS(25), LEVEL_HEIGHT(70), HORIZONTAL_FACTOR(1.0f), START_X(500), START_Y(80) {}
+    TreeVisualizer(sf::RenderWindow& win, sf::Font& f) : window(win), font(f), RADIUS(25), LEVEL_HEIGHT(70), HORIZONTAL_FACTOR(1.0f), START_X(500), START_Y(80), needRedraw(true) {}
 
-
+    //метод для установки флага
+    void setNeedRedraw(bool value) {
+        needRedraw = value;
+    }
     // Обновление размеров всех узлов
     void updateNodesSize(Uzel* node) {
         if (node == nullptr) return;
 
-        // Обновляем кружок
-        node->circle.setRadius(RADIUS);
-        node->circle.setOrigin(RADIUS, RADIUS);
+        if (node != nullptr) {
+            // Обновляем кружок
+            node->circle.setRadius(RADIUS);
+            node->circle.setOrigin(RADIUS, RADIUS);
 
-        // Обновляем текст
-        node->text.setCharacterSize(static_cast<unsigned int>(RADIUS * 0.8f));
+            // Обновляем текст
+            node->text.setCharacterSize(static_cast<unsigned int>(RADIUS * 0.8f));
+        }
 
         // Рекурсивно обновляем детей
         updateNodesSize(node->left);
@@ -365,24 +429,30 @@ public:
             window.draw(emptyText);
             return;
         }
-        // Получаем высоту дерева
-        int treeHeight = tree.getHeight();
 
-        //  расчитываем масштаб  в зависимости от высоты
-        calculateScale(treeHeight);
+        if (needRedraw) {
+            // Получаем высоту дерева
+            int treeHeight = tree.getHeight();
 
-        // Обновляем размеры кружков у всех узлов
-        updateNodesSize(root);
+            //  расчитываем масштаб  в зависимости от высоты
+            calculateScale(treeHeight);
 
-        // Получаем максимальную глубину дерева
-        int level = getMaxLevel(root);
+            // Обновляем размеры кружков у всех узлов
+            updateNodesSize(root);
 
-        // Базовое смещение 
-        int baseOffset = (treeHeight <= 4) ? 4 : (treeHeight <= 6) ? 6 : (treeHeight <= 8) ? 8 : 10;
-        baseOffset = static_cast<int>(baseOffset * HORIZONTAL_FACTOR);
+            // Получаем максимальную глубину дерева
+            int level = getMaxLevel(root);
 
-        // Рассчитываем позиции (начальная позиция в центре окна)
-        calculatePositions(root, START_X, START_Y, baseOffset, level);
+            // Базовое смещение 
+            int baseOffset = (treeHeight <= 4) ? 4 : (treeHeight <= 6) ? 6 : (treeHeight <= 8) ? 8 : 10;
+            baseOffset = static_cast<int>(baseOffset * HORIZONTAL_FACTOR);
+
+            // Рассчитываем позиции (начальная позиция в центре окна)
+            calculatePositions(root, START_X, START_Y, baseOffset, level);
+
+            needRedraw = false;
+
+        }
 
         // Рисуем линии
         drawLines(root);
@@ -392,13 +462,14 @@ public:
     }
 };
 
-
+// ============================================
 // КЛАСС ПОЛЬЗОВАТЕЛЬСКОГО ИНТЕРФЕЙСА
-
+// ============================================
 
 class UI {
 private:
     sf::Font& font;
+    TreeVisualizer& visualizer;
     sf::RectangleShape inputBox;
     sf::RectangleShape inputBo;
     sf::RectangleShape addButton;
@@ -412,6 +483,10 @@ private:
     sf::Text clearText;
     sf::Text statusText;
     sf::Text titleText;
+    sf::RectangleShape rotateLeftButton;
+    sf::RectangleShape rotateRightButton;
+    sf::Text rotateLeftText;
+    sf::Text rotateRightText;
     
 
     std::string currentInput;
@@ -419,7 +494,7 @@ private:
     sf::Clock statusClock;
 
 public:
-    UI(sf::Font& f) : font(f), currentInput(""), isActive(false) {
+    UI(sf::Font& f, TreeVisualizer& viz) : font(f), visualizer(viz), currentInput(""), isActive(false) {
         inputBo.setSize(sf::Vector2f(300, 700));
         inputBo.setPosition(1200, 0);
         inputBo.setFillColor(sf::Color::White);
@@ -461,6 +536,33 @@ public:
         clearButton.setFillColor(sf::Color::White);
         clearButton.setOutlineColor(sf::Color::Black);
         clearButton.setOutlineThickness(1);
+
+        // Кнопка ROTATE LEFT (стрелка влево)
+        rotateLeftButton.setSize(sf::Vector2f(80, 40));
+        rotateLeftButton.setPosition(1250, 300);
+        rotateLeftButton.setFillColor(sf::Color::White);
+        rotateLeftButton.setOutlineColor(sf::Color::Black);
+        rotateLeftButton.setOutlineThickness(1);
+
+        // Кнопка ROTATE RIGHT (стрелка вправо)
+        rotateRightButton.setSize(sf::Vector2f(80, 40));
+        rotateRightButton.setPosition(1250, 350);
+        rotateRightButton.setFillColor(sf::Color::White);
+        rotateRightButton.setOutlineColor(sf::Color::Black);
+        rotateRightButton.setOutlineThickness(1);
+
+        // Текст на кнопках (стрелки)
+        rotateLeftText.setFont(font);
+        rotateLeftText.setString("<- LEFT");
+        rotateLeftText.setCharacterSize(14);
+        rotateLeftText.setFillColor(sf::Color::Black);
+        rotateLeftText.setPosition(1250, 300);
+
+        rotateRightText.setFont(font);
+        rotateRightText.setString("RIGHT ->");
+        rotateRightText.setCharacterSize(14);
+        rotateRightText.setFillColor(sf::Color::Black);
+        rotateRightText.setPosition(1250, 350);
 
         // Тексты на кнопках
         addText.setFont(font);
@@ -528,6 +630,7 @@ public:
                 if (!currentInput.empty()) {
                     int value = std::stoi(currentInput);
                     tree.insert(value);
+                    visualizer.setNeedRedraw(true);
                     statusText.setString("dobavlen element: " + std::to_string(value));
                     statusText.setFillColor(sf::Color::Green);
                     statusClock.restart();
@@ -541,6 +644,7 @@ public:
                 if (!currentInput.empty()) {
                     int value = std::stoi(currentInput);
                     if (tree.remove(value)) {
+                        visualizer.setNeedRedraw(true);
                         statusText.setString("udalen element: " + std::to_string(value));
                         statusText.setFillColor(sf::Color(255, 140, 0));
                     }
@@ -551,6 +655,8 @@ public:
                     statusClock.restart();
                     currentInput.clear();
                     inputText.setString("");
+
+                    visualizer.setNeedRedraw(true);
                 }
             }
 
@@ -575,11 +681,40 @@ public:
             // Проверка клика по кнопке CLEAR
             if (clearButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                 tree.clear();
+                visualizer.setNeedRedraw(true);
                 statusText.setString("derevo ochisheno!");
                 statusText.setFillColor(sf::Color::Blue);
                 statusClock.restart();
                 currentInput.clear();
                 inputText.setString("");
+            }
+
+            // Проверка клика по кнопке ROTATE LEFT
+            if (rotateLeftButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                if (tree.rotateLeftRoot()) {
+                    visualizer.setNeedRedraw(true);
+                    statusText.setString("vraschenie vlevo vypolneno");
+                    statusText.setFillColor(sf::Color::Magenta);
+                }
+                else {
+                    statusText.setString("Error: nelzya vypolnit vraschenie vlevo");
+                    statusText.setFillColor(sf::Color::Red);
+                }
+                statusClock.restart();
+            }
+
+            // Проверка клика по кнопке ROTATE RIGHT
+            if (rotateRightButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                if (tree.rotateRightRoot()) {
+                    visualizer.setNeedRedraw(true);
+                    statusText.setString("vraschenie vpravo vypolneno");
+                    statusText.setFillColor(sf::Color::Magenta);
+                }
+                else {
+                    statusText.setString("Error: nelzya vypolnit vraschenie vpravo");
+                    statusText.setFillColor(sf::Color::Red);
+                }
+                statusClock.restart();
             }
         }
 
@@ -630,6 +765,11 @@ public:
         window.draw(titleText);
         window.draw(statusText);
 
+        window.draw(rotateLeftButton);
+        window.draw(rotateRightButton);
+        window.draw(rotateLeftText);
+        window.draw(rotateRightText);
+
 
         // Отображаем подсказку в поле ввода
         if (currentInput.empty() && !isActive) {
@@ -647,9 +787,9 @@ public:
     }
 };
 
-
+// ============================================
 // ГЛАВНАЯ ФУНКЦИЯ
-
+// ============================================
 
 int main() {
     // Создаем окно SFML
@@ -668,7 +808,7 @@ int main() {
     // Создаем объекты
     BinarySearchTree tree(font);
     TreeVisualizer visualizer(window, font);
-    UI ui(font);
+    UI ui(font, visualizer);
 
     // Добавляем начальные элементы для демонстрации
     std::cout << "Добавляем начальные элементы: ";
