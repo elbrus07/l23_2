@@ -3,7 +3,8 @@
 #include <iostream>
 #include <queue>
 #include <string>
-#include <functional>
+#include <sstream>
+#include <cmath>
 using namespace std;
 
 // Узел дерева
@@ -57,6 +58,7 @@ private:
     Node* root;
     sf::Font font;
     sf::RenderWindow* window = nullptr;
+    sf::Text* statusText = nullptr;  // Указатель на статус текст
     
     bool search(Node* node, int value) {
         if (node == nullptr) return false;
@@ -65,7 +67,6 @@ private:
         return search(node->right, value);
     }
 
-    // Рекурсивная вставка
     Node* insert(Node* node, int value) {
         if (node == nullptr) return new Node(value, font);
         if (value < node->data) {
@@ -76,14 +77,36 @@ private:
         return node;
     }
     
-    /* поиск минимального узла в поддереве */
     Node* minNode(Node* node) {
         while (node && node->left) node = node->left;
         return node;
     }
+    
+    Node* maxNode(Node* node) {
+        while (node && node->right) node = node->right;
+        return node;
+    }
 
-    /* рекурсивное удаление */
+    Node* findNode(Node* node, int value) {
+        if (node == nullptr) return nullptr;
+        if (value == node->data) return node;
+        if (value < node->data) return findNode(node->left, value);
+        return findNode(node->right, value);
+    }
+    
+    Node* findParent(Node* node, int value, Node* parent = nullptr) {
+        if (node == nullptr) return nullptr;
+        if (value == node->data) return parent;
+        if (value < node->data) return findParent(node->left, value, node);
+        return findParent(node->right, value, node);
+    }
+
     Node* remove(Node* node, int value) {
+        Node* node1 = findNode(root, value);
+        if (node1 == nullptr) {
+            if (statusText) statusText->setString(L"Узел не найден!");
+            
+        }
         if (!node) return nullptr;
         
         if (value < node->data) {
@@ -91,39 +114,29 @@ private:
         } else if (value > node->data) {
             node->right = remove(node->right, value);
         } else {
-            // Нашли узел для удаления
-            
-            // Случай 1: нет детей
             if (node->left == nullptr && node->right == nullptr) {
                 delete node;
                 return nullptr;
             }
-            // Случай 2: только правый ребенок
             else if (node->left == nullptr) {
                 Node* temp = node->right;
                 delete node;
                 return temp;
             }
-            // Случай 3: только левый ребенок
             else if (node->right == nullptr) {
                 Node* temp = node->left;
                 delete node;
                 return temp;
             }
-            // Случай 4: два ребенка
             else {
-                // Находим минимальный узел в правом поддереве
                 Node* successor = minNode(node->right);
-                // Копируем значение
                 node->setData(successor->data);
-                // Удаляем successor из правого поддерева
                 node->right = remove(node->right, successor->data);
             }
         }
         return node;
     }
     
-    // Рекурсивный обход (Preorder)
     void preorder(Node* node) {
         if (node == nullptr) return;
         std::cout << node->data << " ";
@@ -131,7 +144,6 @@ private:
         preorder(node->right);
     }
 
-    // Рекурсивный обход (Inorder)
     void inorder(Node* node) {
         if (node == nullptr) return;
         inorder(node->left);
@@ -139,7 +151,6 @@ private:
         inorder(node->right);
     }
     
-    // Рекурсивный обход (Inorder)
     void postorder(Node* node) {
         if (node == nullptr) return;
         postorder(node->left);
@@ -147,17 +158,20 @@ private:
         std::cout << node->data << " ";
     }
     
-    void bfs(Node* node) {
-        if (!node) return;
+    vector<int> bfs(Node* node) {
+        vector<int> nodes;
+        if (!node) return nodes;
         std::queue<Node*> q;
         q.push(node);
         while (!q.empty()) {
             Node* cur = q.front();
             q.pop();
             std::cout << cur->data << " ";
-            if (cur->left)  q.push(cur->left);
+            nodes.push_back(cur->data);
+            if (cur->left) q.push(cur->left);
             if (cur->right) q.push(cur->right);
         }
+        return nodes;
     }
     
     int getMaxLevel(Node* node, int level = 0) {
@@ -165,7 +179,6 @@ private:
         return std::max(getMaxLevel(node->left, level + 1), getMaxLevel(node->right, level + 1));
     }
     
-    // Расчет позиций узлов
     void calculatePositions(Node* node, int x, int y, int xBaseOffset, int level) {
         if (node == nullptr) return;
         
@@ -177,7 +190,6 @@ private:
             xOffset = xOffset*2 + xBaseOffset;
         }
         
-        // Рекурсивно расставляем детей со смещением
         if (node->left) {
             calculatePositions(node->left, x - xOffset, y + 70, xBaseOffset, level-1);
         }
@@ -186,7 +198,6 @@ private:
         }
     }
     
-    // Рисование связей (линий)
     void drawLines(Node* node) {
         if (node == nullptr) return;
         
@@ -207,7 +218,6 @@ private:
         }
     }
     
-    // Рисование узлов
     void drawNodes(Node* node) {
         if (node == nullptr) return;
         
@@ -218,14 +228,26 @@ private:
         drawNodes(node->right);
     }
     
-
+    void clear(Node* node) {
+        if (node == nullptr) return;
+        
+        // Сначала удаляем левое поддерево
+        clear(node->left);
+        // Потом правое поддерево
+        clear(node->right);
+        // Затем сам узел
+        delete node;
+    }
+    
 public:
     BinarySearchTree() : root(nullptr) {
-        if (!font.loadFromFile("fonts/Caladea-Regular.ttf"))
-        {
+        if (!font.loadFromFile("fonts/LiberationSans-Regular.ttf")) {
             std::cerr << "Ошибка: не удалось загрузить файл шрифта.\n";
-            return ;
         }
+    }
+    
+    void setStatusText(sf::Text* text) {
+        statusText = text;
     }
     
     bool search(int value) {
@@ -240,20 +262,81 @@ public:
         root = remove(root, value); 
     }
     
+    void clear() { 
+        clear(root);
+        root = nullptr;
+    }
+    
     void draw(sf::RenderWindow &win) {
         window = &win;
         if (root == nullptr) return;
         
         int level = getMaxLevel(root);
-        
-        // Рассчитываем позиции (начальная позиция в центре окна)
         calculatePositions(root, (win.getSize().x-200)/2, 80, 4, level);
-        
-        // Рисуем линии
         drawLines(root);
-        
-        // Рисуем узлы
         drawNodes(root);
+    }
+    
+    // Правый поворот вокруг указанного узла
+    void rotateRight(int value) {
+        Node* node = findNode(root, value);
+        if (node == nullptr) {
+            if (statusText) statusText->setString(L"Узел не найден!");
+            return;
+        }
+        
+        Node* parent = findParent(root, value);
+        Node* leftChild = node->left;
+        
+        if (leftChild == nullptr) {
+            if (statusText) statusText->setString(L"Невозможно выполнить правый поворот: нет левого ребенка!");
+            return;
+        }
+        
+        Node* temp = leftChild->right;
+        leftChild->right = node;
+        node->left = temp;
+        
+        if (parent == nullptr) {
+            root = leftChild;
+        } else if (parent->left == node) {
+            parent->left = leftChild;
+        } else {
+            parent->right = leftChild;
+        }
+        
+        if (statusText) statusText->setString(L"Правый поворот вокруг: " + to_wstring(value));
+    }
+    
+    // Левый поворот вокруг указанного узла
+    void rotateLeft(int value) {
+        Node* node = findNode(root, value);
+        if (node == nullptr) {
+            if (statusText) statusText->setString(L"Узел не найден!");
+            return;
+        }
+        
+        Node* parent = findParent(root, value);
+        Node* rightChild = node->right;
+        
+        if (rightChild == nullptr) {
+            if (statusText) statusText->setString(L"Невозможно выполнить левый поворот: нет правого ребенка!");
+            return;
+        }
+        
+        Node* temp = rightChild->left;
+        rightChild->left = node;
+        node->right = temp;
+        
+        if (parent == nullptr) {
+            root = rightChild;
+        } else if (parent->left == node) {
+            parent->left = rightChild;
+        } else {
+            parent->right = rightChild;
+        }
+        
+        if (statusText) statusText->setString(L"Левый поворот вокруг: " + to_wstring(value));
     }
 
     void print() {
@@ -272,7 +355,10 @@ public:
         std::cout<<"bfs: ";
         bfs(root);
         std::cout << std::endl;
-        
+    }
+    
+    vector<int> bfs() {
+        return bfs(root);
     }
 };
 
@@ -297,14 +383,12 @@ public:
         this->font = font;
         this->inputStr = str;
         
-        // Настройка текста для ввода
         inputText.setFont(this->font);
         inputText.setString(str);
         inputText.setCharacterSize(24);
         inputText.setFillColor(sf::Color::Black);
         inputText.setPosition(this->x, this->y);
         
-        // Настройка фона поля ввода
         inputBox.setSize(sf::Vector2f(this->w, this->h));
         inputBox.setFillColor(sf::Color(240, 240, 240));
         inputBox.setOutlineColor(sf::Color::Black);
@@ -318,10 +402,8 @@ public:
         window.draw(inputText);
     }
     
-    // Обновление ввода
     void handleEvent(sf::Event& event) {
         if (event.type == sf::Event::MouseButtonPressed) {
-            // Проверка клика по полю
             sf::Vector2f mousePos = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
             if (inputBox.getGlobalBounds().contains(mousePos)) {
                 setActive(true);
@@ -333,7 +415,6 @@ public:
         if (active && event.type == sf::Event::TextEntered) {
             char c = event.text.unicode;
 
-            // Обработка Backspace
             if ((c == 8 || c == 127) && !inputStr.empty()) { 
                 inputStr.pop_back();
             } else if (c >= 32 && c <= 126 && inputStr.length() < 16) {
@@ -352,7 +433,6 @@ public:
     string get_text() {
         return inputStr;
     }
-    
 };
 
 class Button {
@@ -365,17 +445,16 @@ private:
     sf::Text text;
     sf::RectangleShape button;
     bool isHovered = false;
-    function<void()> onClickAction;  // Действие при нажатии
+    function<void()> onClickAction;
     
 public:
-    Button(int x, int y, int w, int h, sf::Font& font, string str = "", function<void()> action = nullptr) {
+    Button(int x, int y, int w, int h, sf::Font& font, wstring str = L"", function<void()> action = nullptr) {
         this->x = x;
         this->y = y;
         this->w = w;
         this->h = h;
         this->font = font;
         this->onClickAction = action;
-        
         
         button.setSize(sf::Vector2f(this->w, this->h));
         button.setPosition(this->x, this->y);
@@ -387,9 +466,7 @@ public:
         text.setString(str);
         text.setCharacterSize(30);
         text.setFillColor(sf::Color::Black);
-        text.setPosition(this->x, this->y);
         
-        // Центрируем текст
         sf::FloatRect textRect = text.getLocalBounds();
         text.setOrigin(textRect.left + textRect.width/2.0f, 
                       textRect.top + textRect.height/2.0f);
@@ -397,7 +474,6 @@ public:
     }
     
     void draw_button(sf::RenderWindow &window) {
-        // Меняем цвет при наведении
         if (isHovered) {
             button.setFillColor(sf::Color(200, 200, 200));
         } else {
@@ -418,21 +494,21 @@ public:
             if (event.type == sf::Event::MouseButtonPressed && 
                 event.mouseButton.button == sf::Mouse::Left) {
                 if (onClickAction) {
-                    onClickAction();  // Выполняем действие
+                    onClickAction();
                 }
             }
         } else {
             isHovered = false;
         }
     }
-    
-    void setAction(std::function<void()> action) {
-        onClickAction = action;
-    }
 };
 
 int main() {
     BinarySearchTree bst;
+    
+    vector<vector<int>> history;
+    int pos = 0;
+    int size = 0;
 
     int arr[] = {50, 30, 70, 20, 40, 60, 80, 25, 35, 45, 55, 65, 75, 85}; 
     
@@ -442,68 +518,138 @@ int main() {
     
     bst.print();
     
+    history.push_back(bst.bfs());
+    size = 1;
+    
     int width = 1000;
     int height = 800;
     
-    sf::RenderWindow window(sf::VideoMode(width + 200, height), "Binary Search Tree", 
+    sf::RenderWindow window(sf::VideoMode(width + 200, height), L"Бинарное Дерево Поиска", 
                            sf::Style::Titlebar | sf::Style::Close);
     sf::Font font;
-    if (!font.loadFromFile("fonts/Caladea-Regular.ttf")) {
+    if (!font.loadFromFile("fonts/LiberationSans-Regular.ttf")) {
         std::cerr << "Ошибка: не удалось загрузить файл шрифта.\n";
         return 1;
     }
     
     TextInput inputField(1020, 50, 180, 40, font);
     
-    // Статусная строка
     sf::Text statusText;
     statusText.setFont(font);
     statusText.setCharacterSize(18);
     statusText.setFillColor(sf::Color::Black);
-    statusText.setPosition(1015, 400);
-    statusText.setString("Ready");
+    statusText.setPosition(115, 600);
+    statusText.setString(L"Готово");
     
-    // Создаем кнопки с действиями
-    Button insertBtn(1015, 120, 180, 40, font, "Insert", [&]() {
+    // Передаем статус текст в дерево
+    bst.setStatusText(&statusText);
+    
+    Button insertBtn(1015, 120, 180, 40, font, L"Вставить", [&]() {
         string currentInput = inputField.get_text();
         if (!currentInput.empty()) {
             int value = stoi(currentInput);
             bst.insert(value);
-            statusText.setString("Inserted: " + currentInput);
             inputField.setActive(false);
+            if (pos < size-1) {
+                history.resize(pos+1);
+                size = pos+1;
+            }
+            history.push_back(bst.bfs());
+            pos++;
+            size++;
         } else {
-            statusText.setString("Error: Empty input!");
+            statusText.setString(L"Ошибка: Пустой ввод!");
         }
     });
     
-    Button removeBtn(1015, 180, 180, 40, font, "Remove", [&]() {
+    Button removeBtn(1015, 180, 180, 40, font, L"Удалить", [&]() {
         string currentInput = inputField.get_text();
         if (!currentInput.empty()) {
             int value = stoi(currentInput);
             bst.remove(value);
-            statusText.setString("Removed: " + currentInput);
             inputField.setActive(false);
+            if (pos < size-1) {
+                history.resize(pos+1);
+                size = pos+1;
+            }
+            history.push_back(bst.bfs());
+            pos++;
+            size++;
         } else {
-            statusText.setString("Error: Empty input!");
+            statusText.setString(L"Ошибка: Пустой ввод!");
         }
     });
     
-    Button searchBtn(1015, 240, 180, 40, font, "Search", [&]() {
+    Button searchBtn(1015, 240, 180, 40, font, L"Поиск", [&]() {
         string currentInput = inputField.get_text();
         if (!currentInput.empty()) {
             int value = stoi(currentInput);
-            // ВАЖНО: нужно добавить метод search в класс BinarySearchTree
             if (bst.search(value)) {
-                 statusText.setString("Found: " + currentInput);
+                statusText.setString(L"Найдено: " + to_wstring(value));
             } else {
-                 statusText.setString("Not found: " + currentInput);
+                statusText.setString(L"Не найдено: " + to_wstring(value));
             }
             inputField.setActive(false);
         } else {
-            statusText.setString("Error: Empty input!");
+            statusText.setString(L"Ошибка: Пустой ввод!");
         }
     });
     
+    Button rotateRightBtn(1015, 360, 180, 40, font, L"Правый", [&]() {
+        string currentInput = inputField.get_text();
+        if (!currentInput.empty()) {
+            int value = stoi(currentInput);
+            bst.rotateRight(value);
+            inputField.setActive(false);
+            if (pos < size-1) {
+                history.resize(pos+1);
+                size = pos+1;
+            }
+            history.push_back(bst.bfs());
+            pos++;
+            size++;
+        } else {
+            statusText.setString(L"Ошибка: Введите значение узла!");
+        }
+    });
+    
+    Button rotateLeftBtn(1015, 300, 180, 40, font, L"Левый", [&]() {
+        string currentInput = inputField.get_text();
+        if (!currentInput.empty()) {
+            int value = stoi(currentInput);
+            bst.rotateLeft(value);
+            inputField.setActive(false);
+            if (pos < size-1) {
+                history.resize(pos+1);
+                size = pos+1;
+            }
+            history.push_back(bst.bfs());
+            pos++;
+            size++;
+        } else {
+            statusText.setString(L"Ошибка: Введите значение узла!");
+        }
+    });
+    
+    Button backBtn(1015, 420, 180, 40, font, L"Назад", [&]() {
+        if (pos > 0) {
+            bst.clear();
+            pos--;
+            for (int i: history[pos]) {
+                bst.insert(i);
+            }
+        }
+    });
+    
+    Button forwardBtn(1015, 480, 180, 40, font, L"Вперёд", [&]() {
+        if (pos < size-1 && size > 1) {
+            bst.clear();
+            pos++;
+            for (int i: history[pos]) {
+                bst.insert(i);
+            }
+        }
+    });
     
     while (window.isOpen()) {
         sf::Event event;
@@ -516,7 +662,10 @@ int main() {
             insertBtn.handleEvent(event, window);
             removeBtn.handleEvent(event, window);
             searchBtn.handleEvent(event, window);
-            
+            rotateRightBtn.handleEvent(event, window);
+            rotateLeftBtn.handleEvent(event, window);
+            backBtn.handleEvent(event, window);
+            forwardBtn.handleEvent(event, window);
         }
         
         window.clear(sf::Color(240, 240, 240));
@@ -527,6 +676,10 @@ int main() {
         insertBtn.draw_button(window);
         removeBtn.draw_button(window);
         searchBtn.draw_button(window);
+        rotateRightBtn.draw_button(window);
+        rotateLeftBtn.draw_button(window);
+        backBtn.draw_button(window);
+        forwardBtn.draw_button(window);
         
         window.draw(statusText);
         
