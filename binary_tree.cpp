@@ -574,8 +574,8 @@ int main() {
     Button insertBtn(winWidth - 220, 210, 200, 40, "Insert", font);
     Button removeBtn(winWidth - 220, 260, 200, 40, "Remove", font);
     Button selectBtn(winWidth - 220, 310, 200, 40, "Select", font);
-    Button rotateLeftBtn(winWidth - 220, 380, 95, 40, "Rotate ←", font);
-    Button rotateRightBtn(winWidth - 115, 380, 95, 40, "Rotate →", font);
+    Button rotateLeftBtn(winWidth - 220, 380, 95, 40, "Rotate <--", font);
+    Button rotateRightBtn(winWidth - 115, 380, 95, 40, "Rotate -->", font);
     
     // Кнопки очистки
     Button clearSelectBtn(winWidth - 220, 430, 200, 30, "Clear Selection", font);
