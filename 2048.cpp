@@ -3,6 +3,8 @@
 #include <string>
 #include <random>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 // КЛАСС ЯЧЕЙКИ
 class Cell {
@@ -37,8 +39,8 @@ public:
         Конструктор создаёт пустую клетку
          */
         shape.setSize(sf::Vector2f(90, 90)); //размер клетки
-        shape.setOutlineThickness(2); //рамка клетки
-        shape.setOutlineColor(sf::Color(187, 173, 160));//цвет рамки
+        shape.setOutlineThickness(5); //рамка клетки
+        shape.setOutlineColor(sf::Color(156, 138, 124));//цвет рамки
         shape.setFillColor(getColorForValue()); //задаём цвет клетки 
     }
     
@@ -116,8 +118,36 @@ private:
     std::vector<std::vector<Cell>> cells;
     sf::Font font;
     int score;
+    int bestScore;
     bool gameOver;
     bool fontLoaded;
+    
+    void loadBestScore() {
+        // Загружаем лучший счёт из файла
+        std::ifstream file("best_score.txt");
+        if (file.is_open()) {
+            file >> bestScore;
+            file.close();
+        } else {
+            bestScore = 0;
+        }
+    }
+    
+    void saveBestScore() {
+        // Сохраняем лучший счёт в файл
+        std::ofstream file("best_score.txt");
+        if (file.is_open()) {
+            file << bestScore;
+            file.close();
+        }
+    }
+    
+    void updateBestScore() {
+        if (score > bestScore) {
+            bestScore = score;
+            saveBestScore();
+        }
+    }
     
     void mergeAndMove(std::vector<int>& line, bool& moved, int& lineScore) {
         /*
@@ -273,6 +303,8 @@ public:
         // конструктор: загружаем шрифт, даём его плиткам, создаём 2 стартовые плитки
         cells.resize(SIZE, std::vector<Cell>(SIZE));
         
+        loadBestScore(); // Загружаем лучший счёт
+        
         if (!font.loadFromFile("fonts/LiberationSans-Regular.ttf")) {
             std::cerr << "Ошибка: не удалось загрузить файл шрифта.\n";
         }
@@ -302,6 +334,7 @@ public:
         
         if(moved) {
             addRandomTile();
+            updateBestScore(); // Обновляем лучший счёт
             gameOver = checkGameOver();
         }
     }
@@ -328,7 +361,7 @@ public:
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
                 cells[i][j].setPosition(offset + j * cellSize + 5, 
-                                       offset + i * cellSize + 5);
+                                       offset + i * cellSize + 100 + 5);
             }
         }
     }
@@ -349,6 +382,12 @@ public:
         //функция возвращает счёт
         return score; 
     }
+    
+    int getBestScore() {
+        //функция возвращает лучший счёт
+        return bestScore;
+    }
+    
     bool isGameOver() { 
         //функция возвращает true, если игра закончена
         return gameOver; 
@@ -367,11 +406,18 @@ private:
     Board board;
     sf::Font font;
     sf::Text scoreText;
-    bool fontLoaded;
+    sf::Text bestScoreText;
+    sf::Text scoreLabelText;
+    sf::Text bestScoreLabelText;
+    
+    // Элементы кнопки "Новая игра"
+    sf::RectangleShape newGameButton;
+    sf::Text newGameText;
+    bool buttonHovered;
     
     void initWindow() {
         //инициализируем окно
-        window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "2048 Game");
+        window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"Игра 2048");
         window.setFramerateLimit(60); // 60 FPS - частота кадров
     }
     
@@ -381,15 +427,56 @@ private:
             std::cerr << "Ошибка: не удалось загрузить файл шрифта.\n";
         }
         
+        // Кнопка "Новая Игра"
+        newGameButton.setSize(sf::Vector2f(140, 55));
+        newGameButton.setPosition(OFFSET, OFFSET + 10);
+        newGameButton.setFillColor(sf::Color(140, 112, 99));
+        
+        newGameText.setFont(font);
+        newGameText.setString(L"Новая Игра");
+        newGameText.setCharacterSize(24);
+        newGameText.setFillColor(sf::Color::White);
+        
+        sf::FloatRect textRect = newGameText.getLocalBounds();
+        newGameText.setOrigin(textRect.left + textRect.width / 2.0f,
+                              textRect.top + textRect.height / 2.0f);
+        newGameText.setPosition(OFFSET + 70, OFFSET + 37.5f);
+        
+        buttonHovered = false;
+        
+        // Текст "СЧЁТ"
+        scoreLabelText.setFont(font);
+        scoreLabelText.setString(L"СЧЁТ");
+        scoreLabelText.setCharacterSize(16);
+        scoreLabelText.setFillColor(sf::Color(238, 228, 218));
+        scoreLabelText.setPosition(OFFSET + 180, OFFSET + 15);
+        
+        // Значение счёта
         scoreText.setFont(font);
-        scoreText.setCharacterSize(30);
-        scoreText.setFillColor(sf::Color(119, 110, 101));
-        scoreText.setPosition(OFFSET, OFFSET + CELL_SIZE * 4 + 10);
+        scoreText.setCharacterSize(28);
+        scoreText.setFillColor(sf::Color::White);
+        scoreText.setStyle(sf::Text::Bold);
+        scoreText.setPosition(OFFSET + 180, OFFSET + 35);
+        
+        // Текст "ЛУЧШИЙ"
+        bestScoreLabelText.setFont(font);
+        bestScoreLabelText.setString(L"ЛУЧШИЙ");
+        bestScoreLabelText.setCharacterSize(16);
+        bestScoreLabelText.setFillColor(sf::Color(238, 228, 218));
+        bestScoreLabelText.setPosition(OFFSET + 300, OFFSET + 15);
+        
+        // Значение лучшего счёта
+        bestScoreText.setFont(font);
+        bestScoreText.setCharacterSize(28);
+        bestScoreText.setFillColor(sf::Color::White);
+        bestScoreText.setStyle(sf::Text::Bold);
+        bestScoreText.setPosition(OFFSET + 300, OFFSET + 35);
     }
     
     void updateUI() {
         //обновляем интерфейс
-        scoreText.setString("Счёт: " + std::to_string(board.getScore()));
+        scoreText.setString(std::to_string(board.getScore()));
+        bestScoreText.setString(std::to_string(board.getBestScore()));
     }
     
     void processEvents() {
@@ -401,15 +488,56 @@ private:
             else if(event.type == sf::Event::KeyPressed) {
                 board.handleMove(event.key.code);
             }
+            else if(event.type == sf::Event::MouseMoved) {
+                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                sf::FloatRect bounds = newGameButton.getGlobalBounds();
+                buttonHovered = bounds.contains(mousePos.x, mousePos.y);
+                
+                if(buttonHovered) {
+                    newGameButton.setFillColor(sf::Color(173, 152, 132));
+                } else {
+                    newGameButton.setFillColor(sf::Color(140, 112, 99));
+                }
+            }
+            else if(event.type == sf::Event::MouseButtonPressed) {
+                if(event.mouseButton.button == sf::Mouse::Left) {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                    sf::FloatRect bounds = newGameButton.getGlobalBounds();
+                    if(bounds.contains(mousePos.x, mousePos.y)) {
+                        board.reset();
+                        board.updatePositions(CELL_SIZE, OFFSET);
+                    }
+                }
+            }
         }
     }
     
     void render() {
         window.clear(sf::Color(187, 173, 160));
         
-        board.draw(window);
+        // Фон для счёта
+        sf::RectangleShape scoreBg(sf::Vector2f(120, 70));
+        scoreBg.setFillColor(sf::Color(140, 112, 99));
+        scoreBg.setPosition(OFFSET + 150, OFFSET + 10);
+        window.draw(scoreBg);
         
+        // Фон для лучшего счёта
+        sf::RectangleShape bestScoreBg(sf::Vector2f(120, 70));
+        bestScoreBg.setFillColor(sf::Color(140, 112, 99));
+        bestScoreBg.setPosition(OFFSET + 280, OFFSET + 10);
+        window.draw(bestScoreBg);
+        
+        // Кнопка
+        window.draw(newGameButton);
+        window.draw(newGameText);
+        
+        // Тексты
+        window.draw(scoreLabelText);
         window.draw(scoreText);
+        window.draw(bestScoreLabelText);
+        window.draw(bestScoreText);
+        
+        board.draw(window);
         
         window.display();
     }
