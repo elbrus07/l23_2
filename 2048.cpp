@@ -39,7 +39,7 @@ public:
         Конструктор создаёт пустую клетку
          */
         shape.setSize(sf::Vector2f(90, 90)); //размер клетки
-        shape.setOutlineThickness(5); //рамка клетки
+        shape.setOutlineThickness(9); //рамка клетки
         shape.setOutlineColor(sf::Color(156, 138, 124));//цвет рамки
         shape.setFillColor(getColorForValue()); //задаём цвет клетки 
     }
@@ -120,7 +120,6 @@ private:
     int score;
     int bestScore;
     bool gameOver;
-    bool fontLoaded;
     
     void loadBestScore() {
         // Загружаем лучший счёт из файла
@@ -299,7 +298,7 @@ private:
     }
     
 public:
-    Board() : score(0), gameOver(false), fontLoaded(false) {
+    Board() : score(0), gameOver(false) {
         // конструктор: загружаем шрифт, даём его плиткам, создаём 2 стартовые плитки
         cells.resize(SIZE, std::vector<Cell>(SIZE));
         
@@ -428,7 +427,7 @@ private:
         }
         
         // Кнопка "Новая Игра"
-        newGameButton.setSize(sf::Vector2f(140, 55));
+        newGameButton.setSize(sf::Vector2f(140, 60));
         newGameButton.setPosition(OFFSET, OFFSET + 10);
         newGameButton.setFillColor(sf::Color(140, 112, 99));
         
@@ -440,7 +439,7 @@ private:
         sf::FloatRect textRect = newGameText.getLocalBounds();
         newGameText.setOrigin(textRect.left + textRect.width / 2.0f,
                               textRect.top + textRect.height / 2.0f);
-        newGameText.setPosition(OFFSET + 70, OFFSET + 37.5f);
+        newGameText.setPosition(OFFSET + 70, OFFSET + 40.0f);
         
         buttonHovered = false;
         
@@ -453,7 +452,7 @@ private:
         
         // Значение счёта
         scoreText.setFont(font);
-        scoreText.setCharacterSize(28);
+        scoreText.setCharacterSize(26);
         scoreText.setFillColor(sf::Color::White);
         scoreText.setStyle(sf::Text::Bold);
         scoreText.setPosition(OFFSET + 180, OFFSET + 35);
@@ -467,7 +466,7 @@ private:
         
         // Значение лучшего счёта
         bestScoreText.setFont(font);
-        bestScoreText.setCharacterSize(28);
+        bestScoreText.setCharacterSize(26);
         bestScoreText.setFillColor(sf::Color::White);
         bestScoreText.setStyle(sf::Text::Bold);
         bestScoreText.setPosition(OFFSET + 300, OFFSET + 35);
@@ -516,13 +515,13 @@ private:
         window.clear(sf::Color(187, 173, 160));
         
         // Фон для счёта
-        sf::RectangleShape scoreBg(sf::Vector2f(120, 70));
+        sf::RectangleShape scoreBg(sf::Vector2f(120, 60));
         scoreBg.setFillColor(sf::Color(140, 112, 99));
         scoreBg.setPosition(OFFSET + 150, OFFSET + 10);
         window.draw(scoreBg);
         
         // Фон для лучшего счёта
-        sf::RectangleShape bestScoreBg(sf::Vector2f(120, 70));
+        sf::RectangleShape bestScoreBg(sf::Vector2f(120, 60));
         bestScoreBg.setFillColor(sf::Color(140, 112, 99));
         bestScoreBg.setPosition(OFFSET + 280, OFFSET + 10);
         window.draw(bestScoreBg);
