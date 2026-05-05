@@ -2,18 +2,24 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: g++ сборка активного файла",
+            "label": "C/C++: g++ сборка проекта GTKMM",
             "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "${fileDirname}/*.cpp", 
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
-                "`pkg-config --cflags --libs gtkmm-4.0`"
+                "-I/usr/include/gtkmm-4.0", 
+                "-I/usr/lib/x86_64-linux-gnu/gtkmm-4.0/include",
+                "$(pkg-config", "--cflags", "--libs", "gtkmm-4.0)"
             ],
             "options": {
-                "cwd": "${fileDirname}"
+                "cwd": "${fileDirname}",
+                "shell": {
+                    "executable": "/bin/bash",
+                    "args": ["-c"]
+                }
             },
             "problemMatcher": [
                 "$gcc"
@@ -22,7 +28,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "detail": "Задача создана отладчиком."
+            "detail": "Сборка всех файлов в папке с gtkmm-4.0"
         }
     ],
     "version": "2.0.0"

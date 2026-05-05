@@ -1,0 +1,3 @@
+/home/stud/my_progs/l23_2/gui_project/build/CMakeFiles/MyGtkmmApp.dir
+/home/stud/my_progs/l23_2/gui_project/build/CMakeFiles/edit_cache.dir
+/home/stud/my_progs/l23_2/gui_project/build/CMakeFiles/rebuild_cache.dir
