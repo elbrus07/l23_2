@@ -62,7 +62,7 @@ int main() {
     // Создаем окно 800x600
     sf::RenderWindow window(sf::VideoMode(1200, 600), L"Игра Пушки - SFML 2.6");
 
-    window.setFramerateLimit(60);//Ограничение кадров
+    window.setFramerateLimit(40);//Ограничение кадров
 
 
 
