@@ -14,7 +14,7 @@ TextRedactor::TextRedactor()
  
     set_title("Текстовый редактор");
     set_default_size(800, 600);
-    set_child(main_box)
+    set_child(main_box);
 
     // Настройка отступов
     main_box.set_margin(10);
@@ -28,7 +28,7 @@ TextRedactor::TextRedactor()
     
     
     
-    scroll_win.set_child(TextView);
+    scroll_win.set_child(text_view);
     scroll_win.set_policy(Gtk::PolicyType::AUTOMATIC, Gtk::PolicyType::AUTOMATIC);
     scroll_win.set_expand(true);  //расширяет виджет
     
@@ -43,16 +43,16 @@ TextRedactor::TextRedactor()
     
    
     //подключение обработчика собыитий
-    create_btn.signal_clicked().connect(sigc::mem_fun(*this, &TextRedactor::button_create));
-    open_btn.signal_clicked().connect(sigc::mem_fun(*this, &TextRedactor::button_open));
-    save_btn.signal_clicked().connect(sigc::mem_fun(*this, &TextRedactor::button_save));
+    create_btn.signal_clicked().connect(sigc::mem_fun(*this, &TextRedactor::create_click));
+    open_btn.signal_clicked().connect(sigc::mem_fun(*this, &TextRedactor::open_click));
+    save_btn.signal_clicked().connect(sigc::mem_fun(*this, &TextRedactor::save_click));
 
     current_file = "";
 }
 
 TextRedactor::~TextRedactor() {}
 
-void TextRedactor::button_create()
+void TextRedactor::create_click()
 {
 
     // Создаем диалог для выбора имени файла
@@ -65,7 +65,7 @@ void TextRedactor::button_create()
             try {
                 auto file = Gtk::FileDialog::create()->save_finish(result);
                 if (file) {
-                    currentFile = file->get_path();
+                    current_file = file->get_path();
                     
                     text_buffer->set_text("");
                     std::ofstream out(current_file);
@@ -74,13 +74,13 @@ void TextRedactor::button_create()
                 }
                     
             }catch (const Glib::Error& err) {
-            std::cerr << "Ошибка: " << err.what() << std::endl
+            std::cerr << "Ошибка: " << err.what() << std::endl;
         }
     });
 
 }
 
-void TextRedactor::button_open()
+void TextRedactor::open_click()
 {
     auto dialog = Gtk::FileDialog::create();
     dialog->set_title("Открыть файл");
@@ -93,7 +93,7 @@ void TextRedactor::button_open()
             auto file = Gtk::FileDialog::create()->open_finish(result);
             if (file) {
                 current_file = file->get_path();
-                load_from_file(current_file);
+                //load_file(current_file);
                 set_title("Текстовый редактор - " + Glib::path_get_basename(current_file));
             }
         }catch (const Glib::Error& err) {
@@ -102,7 +102,7 @@ void TextRedactor::button_open()
     });
 }
 
-void TextRedactor::button_save()
+void TextRedactor::save_click()
 {
     if (current_file.empty()) {
         // Если файл еще не выбран, показываем диалог сохранения
@@ -117,7 +117,7 @@ void TextRedactor::button_save()
                 auto file = Gtk::FileDialog::create()->save_finish(result);
                 if (file) {
                     current_file = file->get_path();
-                    save_to_file(current_file);
+                    save_file(current_file);
                     set_title("Текстовый редактор - " + Glib::path_get_basename(current_file));
                 }
             } catch (const Glib::Error& err) {
@@ -126,12 +126,12 @@ void TextRedactor::button_save()
         });
     } else {
         // Сохраняем в существующий файл
-        save_to_file(current_file);
+        save_file(current_file);
     }
 
     
 }
-void TextRedactor::save_to_file(const std::string& path)
+void TextRedactor::save_file(const std::string& path)
 {
     std::ofstream file(path);
     if (file.is_open()) {
@@ -141,3 +141,4 @@ void TextRedactor::save_to_file(const std::string& path)
         file.close();
     }
 }
+
