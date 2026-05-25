@@ -2,6 +2,8 @@
 #define TEXTREDACTOR_H
 
 #include <gtkmm.h>
+#include <vector>
+#include <string>
 
 class TextRedactor : public Gtk::Window
 {
@@ -20,7 +22,13 @@ private:
     void load_file(const std::string& path);
     void save_file(const std::string& path);
     
+    void setup_tags();
+    void highlight_words();
+    void on_buffer_changed();
     
+    private:
+   
+
     Gtk::Box main_box;
     Gtk::Box button_box;
     Gtk::Button create_btn;
@@ -31,8 +39,17 @@ private:
 
 
     Glib::RefPtr<Gtk::TextBuffer> text_buffer;
+    Glib::RefPtr<Gtk::TextTag> red_tag;  // Тег для красного цвета
+
 
     std::string current_file;  // Текущий файл
+
+    // Список слов для подсветки 
+    std::vector<std::string> words_to_highlight = {
+        "error", "bug", "fixme", "todo", "warning", 
+        "красный", "важно", "ошибка", "баг"
+    };
+    bool highlight_enabled;
 };
 
 #endif
