@@ -13,8 +13,12 @@ TextRedactor::TextRedactor()
   highlight_enabled(true)
 {
     set_title("Текстовый редактор");
+<<<<<<< HEAD
     set_default_size(800,600);
 
+=======
+    set_default_size(800, 600);
+>>>>>>> 8980e91 (Проверка)
     set_child(main_box);
 
     main_box.set_margin(10);
@@ -25,11 +29,22 @@ TextRedactor::TextRedactor()
     button_box.append(create_btn);
     button_box.append(open_btn);
     button_box.append(save_btn);
+<<<<<<< HEAD
 
     scroll_win.set_child(text_view);
     scroll_win.set_expand(true);
 
     text_buffer = Gtk::TextBuffer::create();
+=======
+    
+    Gtk::TextView TextView;
+    
+    scroll_win.set_child(TextView);
+    scroll_win.set_policy(Gtk::PolicyType::AUTOMATIC, Gtk::PolicyType::AUTOMATIC);
+    scroll_win.set_expand(true);  //расширяет виджет
+    
+    text_buffer = Gtk::TextBuffer::create(); //ХРАНИЛИЩЕ ДЛЯ ТЕКСТАР 
+>>>>>>> 8980e91 (Проверка)
     text_view.set_buffer(text_buffer);
 
     main_box.append(button_box);
@@ -258,6 +273,7 @@ void TextRedactor::load_file(const std::string& path)
         file.close();
     }
 }
+<<<<<<< HEAD
 
 
 void TextRedactor::save_file(const std::string& path)
@@ -274,3 +290,5 @@ void TextRedactor::save_file(const std::string& path)
         file.close();
     }
 }
+=======
+>>>>>>> 8980e91 (Проверка)
