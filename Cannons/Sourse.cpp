@@ -1,39 +1,328 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include <cstdlib>  
-#include <ctime> 
+#include <cstdlib>
+#include <ctime>
 #include <vector>
 #include <string>
 #include <cmath>
 #include <SFML/Audio.hpp>
 #include <random>
 
-//Структура пушки
-struct Cannon
-{
+
+// КЛАСС ПУШКИ (сохраняем все твои комментарии)
+
+class Cannon {
+public:
     sf::CircleShape shape;
     bool isAlive;       //Жива пушка или нет
-    int playerID;       //1(красный слева) или 2(синий справа) 
+    int playerID;       //1(красный слева) или 2(синий справа)
+
+    // Индивидуальные настройки пушки
+    float angle;            // угол наклона от 0 до 90
+    float velocity;         // сила выстрела от 5 до 30
+    float mass;             // масса снаряда от 1.0 до 3.0
+
+    // Конструктор
+    Cannon() : isAlive(true), playerID(1), angle(45.f), velocity(15.f), mass(1.0f) {
+        shape.setOrigin(20.f, 20.f); // Центр круга = его позиция (по умолчанию)
+    }
+
+    // Инициализация пушки с параметрами
+    void setup(float x, float y, float radius, int pid) {
+        shape.setRadius(radius);
+        shape.setOrigin(radius, radius); // Центр круга = его позиция
+        shape.setPosition(x, y);
+        shape.setFillColor(pid == 1 ? sf::Color::Red : sf::Color::Blue);
+        playerID = pid;
+        isAlive = true;
+        angle = 45.f;
+        velocity = 15.f;
+        mass = 1.0f;
+    }
+
+    // Отрисовка пушки
+    void draw(sf::RenderWindow& window) const {
+        if (isAlive) window.draw(shape);
+    }
+
+    // Выделение активной пушки белой обводкой
+    void setSelected(bool selected) {
+        if (selected && isAlive) {
+            shape.setOutlineColor(sf::Color::White);
+            shape.setOutlineThickness(4.f);
+        }
+        else {
+            shape.setOutlineColor(sf::Color::Transparent);
+            shape.setOutlineThickness(0.f);
+        }
+    }
+
+    // Получить центр пушки 
+    sf::Vector2f getCenter() const {
+        return shape.getPosition();
+    }
+
+    // Установить позицию пушки
+    void setPosition(float x, float y) {
+        shape.setPosition(x, y);
+    }
 };
 
-//Структура снаряда
-struct Shell {
+
+// КЛАСС СНАРЯДА
+
+class Shell {
+public:
     sf::CircleShape shape;
     float vx, vy;   // скорости по осям Оx и Оy
     bool isActive;  //Летит ли снаряд сейчас
     float mass;     //масса снаряда, от нее зависит размер снаряда и урон
     float explosionRadius; //радиус поражения
+
+    Shell() : vx(0), vy(0), isActive(false), mass(1.f), explosionRadius(15.f) {
+        shape.setFillColor(sf::Color::White);
+        shape.setOutlineColor(sf::Color::Black);
+        shape.setOutlineThickness(2.f);
+    }
+
+    // Запуск снаряда из пушки
+    void launch(float centerX, float centerY, float angleDeg, float velocity, float shellMass, int playerID) {
+        mass = shellMass;
+        explosionRadius = mass * 15.f;  // расчет радиуса поражения
+
+        // задается размер снаряда
+        float shellRadius = mass * 8.f;   // получается 8 пикселей на единицу массы
+        shape.setRadius(shellRadius);
+        shape.setOrigin(shellRadius, shellRadius); //центр находится по центру круга
+
+        // расчет начальной скорости
+        // перевод угла в радианы
+        float angleRad = angleDeg * 3.14159f / 180.f;
+
+        // Вычисление позиции "дула"
+        float muzzleDist = 40.f;  // Расстояние от центра пушки
+        // Игрок 1 стреляет вправо (+1), Игрок 2 влево (-1)
+        float direction = (playerID == 1) ? 1.f : -1.f;
+
+        // Позиция вылета по направлению прицела
+        float muzzleX = centerX + cos(angleRad) * muzzleDist * direction;
+        float muzzleY = centerY - sin(angleRad) * muzzleDist;
+        shape.setPosition(muzzleX, muzzleY);
+
+        // Разлагаем скорость на компоненты
+        if (playerID == 1) {
+            // Красные стреляют ВПРАВО
+            vx = velocity * cos(angleRad);
+        }
+        else {
+            // Синие стреляют ВЛЕВО
+            vx = -velocity * cos(angleRad);
+        }
+        vy = -velocity * sin(angleRad);  // Минус потому что летим вверх
+
+        isActive = true;
+    }
+
+    // Обновление физики полёта
+    void update(float gravityFactor) {
+        if (!isActive) return;
+
+        // обновление позиции
+        shape.move(vx, vy);
+
+        // Применяем гравитацию (с учётом массы)
+        vy += gravityFactor * mass;
+    }
+
+    // Отрисовка снаряда
+    void draw(sf::RenderWindow& window) const {
+        if (isActive) window.draw(shape);
+    }
+
+    // Получить центр снаряда
+    sf::Vector2f getCenter() const {
+        return shape.getPosition();
+    }
+
+    // Получить радиус снаряда
+    float getRadius() const {
+        return shape.getRadius();
+    }
+
+    // Проверка: упал ли снаряд на землю
+    bool checkGroundCollision(int x, float terrainY) const {
+        if (x < 0 || x >= 1200) return false;
+        return shape.getPosition().y + shape.getRadius() >= terrainY;
+    }
+
+    // Проверка: вылетел ли снаряд за границы экрана
+    bool checkBoundsCollision() const {
+        return shape.getPosition().x > 1200.f ||
+            shape.getPosition().x < -100.f ||
+            shape.getPosition().y < -500.f;
+    }
 };
 
-//Структура взрыва
-struct Explosion {
+
+// КЛАСС ВЗРЫВА
+
+class Explosion {
+public:
     sf::CircleShape core;      // Ядро взрыва
     std::vector<sf::CircleShape> particles; // Осколки
     float lifetime;            // Время жизни (секунды)
     bool isActive;
+
+    Explosion() : lifetime(0.f), isActive(false) {
+        core.setFillColor(sf::Color(255, 165, 0));
+        core.setOrigin(5.f, 5.f);
+        // Создаем 8 осколков
+        for (int i = 0; i < 8; ++i) {
+            sf::CircleShape p(3.f);
+            p.setFillColor(sf::Color::Red);
+            p.setOrigin(3.f, 3.f);
+            particles.push_back(p);
+        }
+    }
+
+    // Запуск эффекта взрыва в точке (x, y)
+    void trigger(float x, float y, float radius, sf::Sound& explosionSound) {
+        core.setPosition(x, y);
+        core.setRadius(radius * 0.5f);
+        core.setFillColor(sf::Color(255, 200, 50, 255));
+
+        for (auto& p : particles) {
+            p.setPosition(x, y);
+            p.setRadius(2.f + std::rand() % 4);
+            p.setFillColor(sf::Color(255, 100, 0, 255));
+        }
+
+        lifetime = 0.5f; // Длительность полсекунды
+        isActive = true;
+
+        explosionSound.play(); // Звук
+        explosionSound.setPitch(0.8f + std::rand() % 3 * 0.1f); // Немного меняем тон
+    }
+
+    // Обновление анимации взрыва
+    void update(float dt) {
+        if (!isActive) return;
+
+        lifetime -= dt;
+        float progress = 1.0f - (lifetime / 0.5f); // От 0 до 1
+
+        // Расширяем ядро
+        core.setRadius(core.getRadius() + 2.f);
+        sf::Color coreColor = core.getFillColor();
+        coreColor.a = static_cast<sf::Uint8>(255 * (1.0f - progress)); // Исчезает
+        core.setFillColor(coreColor);
+
+        // Разлетаем осколки
+        for (size_t i = 0; i < particles.size(); ++i) {
+            float angle = (360.f / particles.size()) * i + progress * 20;
+            float dist = progress * 60.f;
+            float px = core.getPosition().x + cos(angle * 3.14159f / 180.f) * dist;
+            float py = core.getPosition().y + sin(angle * 3.14159f / 180.f) * dist;
+
+            particles[i].setPosition(px, py);
+            sf::Color pColor = particles[i].getFillColor();
+            pColor.a = static_cast<sf::Uint8>(255 * (1.0f - progress));
+            particles[i].setFillColor(pColor);
+        }
+
+        if (lifetime <= 0.f) {
+            isActive = false;
+        }
+    }
+
+    // Отрисовка взрыва
+    void draw(sf::RenderWindow& window) const {
+        if (!isActive) return;
+        window.draw(core);
+        for (const auto& p : particles) {
+            window.draw(p);
+        }
+    }
+
+    bool isFinished() const { return !isActive; }
 };
 
-// === ГЕНЕРАТОР ЗВУКОВ ===
+
+// КЛАСС ЛАНДШАФТА
+
+class Terrain {
+private:
+    std::vector<float> heights; // Карта высот: heights[x] = Y земли в точке X
+    int width;
+    sf::VertexArray terrainVA;
+
+public:
+    Terrain(int w, int baseY = 480) : width(w), terrainVA(sf::TriangleStrip, w * 2) {
+        heights.resize(w);
+        generate(baseY);
+    }
+
+    // Генерация случайного ландшафта
+    void generate(int baseY) {
+        // Базовый уровень
+        for (int i = 0; i < width; ++i) heights[i] = static_cast<float>(baseY);
+
+        // Добавляем случайные холмы и ямы
+        for (int h = 0; h < 12; ++h) {
+            int center = rand() % width;
+            int w = 40 + rand() % 80;      // Ширина холма
+            float height = (rand() % 100) - 50; // Высота (+ вверх, - вниз)
+
+            for (int x = center - w; x <= center + w; ++x) {
+                if (x >= 0 && x < width) {
+                    float dist = std::abs(x - center);
+                    float factor = 1.0f - (dist / static_cast<float>(w));
+                    factor = factor * factor; // Сглаживание краев
+                    heights[x] += height * factor;
+                }
+            }
+        }
+
+        // Финальное сглаживание
+        for (int pass = 0; pass < 3; ++pass) {
+            std::vector<float> temp = heights;
+            for (int i = 1; i < width - 1; ++i) {
+                temp[i] = (heights[i - 1] + heights[i] + heights[i + 1]) / 3.0f;
+            }
+            heights = temp;
+        }
+
+        updateVertexArray();
+    }
+
+    // Обновление массива вершин для отрисовки
+    void updateVertexArray() {
+        for (int i = 0; i < width; ++i) {
+            terrainVA[2 * i].position = sf::Vector2f(static_cast<float>(i), heights[i]);
+            terrainVA[2 * i].color = sf::Color(50, 180, 50);       // Верх травы
+            terrainVA[2 * i + 1].position = sf::Vector2f(static_cast<float>(i), 600.f);
+            terrainVA[2 * i + 1].color = sf::Color(20, 80, 20);    // Низ земли
+        }
+    }
+
+    // Получить Y земли в точке X
+    float getHeight(int x) const {
+        if (x < 0) x = 0;
+        if (x >= width) x = width - 1;
+        return heights[x];
+    }
+
+    // Отрисовка ландшафта
+    void draw(sf::RenderWindow& window) const {
+        window.draw(terrainVA);
+    }
+
+    int getWidth() const { return width; }
+};
+
+
+// ГЕНЕРАТОР ЗВУКОВ 
+
 sf::SoundBuffer createExplosionSound() {
     std::vector<sf::Int16> samples(44100 * 0.5); // 0.5 секунды
     for (size_t i = 0; i < samples.size(); ++i) {
@@ -45,70 +334,62 @@ sf::SoundBuffer createExplosionSound() {
 }
 
 sf::SoundBuffer createShootSound() {
-    std::vector<sf::Int16> samples(44100 * 0.2); // 0.2 секунды
+    const int sampleRate = 44100;
+    const float duration = 0.6f; 
+    std::vector<sf::Int16> samples(sampleRate * duration);
+
     for (size_t i = 0; i < samples.size(); ++i) {
-        float t = i / 44100.0f;
-        samples[i] = (int)(std::sin(t * 800 * 3.14159f) * 20000 * (1.0f - t * 5));
+        float t = i / (float)sampleRate;
+
+        float crack = 0.f;
+        if (t < 0.015f) {
+            crack = ((std::rand() % 65536) - 32768) / 32768.f;
+            crack *= (1.0f - t / 0.015f); // Быстрое затухание
+        }
+
+        float boom1 = std::sin(t * 45.f * 2.f * 3.14159f);
+        float boom2 = std::sin(t * 90.f * 2.f * 3.14159f) * 0.5f;
+        float boom = boom1 + boom2;
+
+        float envelope;
+        if (t < 0.005f) {
+            envelope = t / 0.005f;                  // Мгновенная атака (5 мс)
+        }
+        else if (t < 0.1f) {
+            envelope = 1.0f - (t - 0.005f) / 0.095f * 0.6f; // Быстрый спад удара
+        }
+        else {
+            envelope = 0.4f * std::exp(-(t - 0.1f) * 6.f);  // Долгий хвост (раскат)
+        }
+
+        float sample = (crack * 0.85f + boom * 0.95f) * envelope * 30000.f;
+
+        if (sample > 32767.f) sample = 32767.f;
+        if (sample < -32768.f) sample = -32768.f;
+
+        samples[i] = static_cast<sf::Int16>(sample);
     }
+
     sf::SoundBuffer buffer;
-    buffer.loadFromSamples(samples.data(), samples.size(), 1, 44100);
+    buffer.loadFromSamples(samples.data(), samples.size(), 1, sampleRate);
     return buffer;
 }
 
 
-
+// ГЛАВНАЯ ФУНКЦИЯ
 
 int main() {
-    // Создаем окно 800x600
+    // Создаем окно 1200x600
     sf::RenderWindow window(sf::VideoMode(1200, 600), L"Игра Пушки - SFML 2.6");
+    window.setFramerateLimit(60); // Ограничение кадров
 
-    window.setFramerateLimit(40);//Ограничение кадров
-
-
-
-    // звуки
+    // Звуки
     sf::SoundBuffer shootBuffer = createShootSound();
     sf::SoundBuffer explosionBuffer = createExplosionSound();
     sf::Sound shootSound(shootBuffer);
     sf::Sound explosionSound(explosionBuffer);
 
-
-
-
-    // взрыв
-    Explosion explosion;
-    explosion.isActive = false;
-    explosion.core.setFillColor(sf::Color(255, 165, 0));
-    explosion.core.setOrigin(5.f, 5.f);
-    // Создаем 8 осколков
-    for (int i = 0; i < 8; ++i) {
-        sf::CircleShape p(3.f);
-        p.setFillColor(sf::Color::Red);
-        p.setOrigin(3.f, 3.f);
-        explosion.particles.push_back(p);
-    }
-
-    // Функция для запуска эффекта взрыва в точке (x, y)
-    auto triggerExplosion = [&](float x, float y, float radius) {
-        explosion.core.setPosition(x, y);
-        explosion.core.setRadius(radius * 0.5f);
-        explosion.core.setFillColor(sf::Color(255, 200, 50, 255));
-
-        for (auto& p : explosion.particles) {
-            p.setPosition(x, y);
-            p.setRadius(2.f + std::rand() % 4);
-            p.setFillColor(sf::Color(255, 100, 0, 255));
-        }
-
-        explosion.lifetime = 0.5f; // Длительность полсекунды
-        explosion.isActive = true;
-
-        explosionSound.play(); // Звук
-        explosionSound.setPitch(0.8f + std::rand() % 3 * 0.1f); // Немного меняем тон
-    };
-
-
-
+    // Шрифт для текстов
     sf::Font font;
     if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
         font.loadFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
@@ -117,111 +398,48 @@ int main() {
         font.loadFromFile("C:/Windows/Fonts/arial.ttf");
     }
 
-    //Тексты
-    sf::Text angleText;
-
-    angleText.setFont(font);
-    angleText.setCharacterSize(20);
-    angleText.setFillColor(sf::Color::White);
-
-    //Скорость
-    sf::Text velocityText;
-    velocityText.setFont(font);
-    velocityText.setCharacterSize(20);
-    velocityText.setFillColor(sf::Color::Yellow);
-
-    //Масса
-    sf::Text massText;
-    massText.setFont(font);
-    massText.setCharacterSize(20);
-    massText.setFillColor(sf::Color::Cyan);
+    // Тексты интерфейса
+    sf::Text angleText, velocityText, massText;
+    angleText.setFont(font); angleText.setCharacterSize(20); angleText.setFillColor(sf::Color::White);
+    velocityText.setFont(font); velocityText.setCharacterSize(20); velocityText.setFillColor(sf::Color::Yellow);
+    massText.setFont(font); massText.setCharacterSize(20); massText.setFillColor(sf::Color::Cyan);
 
     srand(time(0));  // Перемешивает генератор, чтобы числа были разными каждый запуск
 
+    // Генерация ландшафта
+    Terrain terrain(1200, 480);
 
-
-    //Генерация ландшафта
-    std::vector<float> terrain(1200); // Карта высот: terrain[x] = Y земли в точке X
-
-    //  Базовый уровень
-    for (int i = 0; i < 1200; ++i) terrain[i] = 480.f;
-
-    // Добавляем случайные холмы и ямы
-    for (int h = 0; h < 12; ++h) {
-        int center = rand() % 1200;
-        int width = 40 + rand() % 80;      // Ширина холма
-        float height = (rand() % 100) - 50; // Высота (+ вверх, - вниз)
-
-        for (int x = center - width; x <= center + width; ++x) {
-            if (x >= 0 && x < 1200) {
-                float dist = std::abs(x - center);
-                float factor = 1.0f - (dist / (float)width);
-                factor = factor * factor; // Сглаживание краев
-                terrain[x] += height * factor;
-            }
-        }
-    }
-
-    for (int pass = 0; pass < 3; ++pass) {
-        std::vector<float> temp = terrain;
-        for (int i = 1; i < 1199; ++i) {
-            temp[i] = (terrain[i - 1] + terrain[i] + terrain[i + 1]) / 3.0f;
-        }
-        terrain = temp;
-    }
-    // получаем Y земли в точке X
-    auto GetTerrainY = [&](int x) -> float {
-        if (x < 0) x = 0;
-        if (x >= 1200) x = 1199;
-        return terrain[x];
-    };
-
-
-
-
-    //Создание пушек
+    // Создание пушек
     int cannonsPerPlayer = rand() % 2 + 3;  // Дает число 3 или 4
     int TOTAL_CANNONS = cannonsPerPlayer * 2; // Умножаем на 2 (два игрока)
 
-    // ЛИНИЯ ПРИЦЕЛА 
+    // ЛИНИЯ ПРИЦЕЛА
     sf::RectangleShape aimLine;
     aimLine.setSize(sf::Vector2f(60.f, 5.f)); // Длина 60, толщина 5
     aimLine.setFillColor(sf::Color::Yellow);
     aimLine.setOrigin(0.f, 2.5f); // Вращать от начала линии, а не от центра
 
-    //создание снаряда
+    // Создание снаряда
     Shell shell;
-    shell.shape.setFillColor(sf::Color::White);
-    shell.shape.setOutlineColor(sf::Color::Black);
-    shell.shape.setOutlineThickness(2.f);
-    shell.isActive = false; // в начале снаряд не летит
-    shell.mass = 1.f;   //начальная масса
 
-    // Визуализация снаряда(как он будет выглядить)
+    // Визуализация снаряда (как он будет выглядеть)
     sf::CircleShape shellPreview;
     shellPreview.setFillColor(sf::Color::White);
     shellPreview.setOutlineColor(sf::Color::Black);
     shellPreview.setOutlineThickness(2.f);
 
+    // Массив пушек
     std::vector<Cannon> cannons(TOTAL_CANNONS);
 
-    //ПЕРЕМЕННЫЕ ИГРЫ 
+    // ПЕРЕМЕННЫЕ ИГРЫ
     int currentPlayer = 1;          // Сейчас ходит Игрок 1
-    int activeCannonIndex = 0;      //индекс активной пушки в массиве
-    float currentAngle = 45.f;      // Начальный угол (в градусах)
-    float currentVelocity = 15.f;   //начальная скорость (от 10 до 100)
-    float currentMass = 1.0f;       //масса снаряда (от 1.0 до 3.0)
-
-    bool canShoot = true;       // Можно ли сейчас стрелять 
-    bool gameOver = false;      // Закончилась ли игра
-    int winnerID = 0;           // какой игрок победител (1 или 2)
-
-    bool isPlacementPhase = true;      //true - режим растановки , false - бой начался 
-    int draggedCannonIndex = -1;        //индекс пушки которую тащим мышкой
-
-
-    int selectedCannonIndex = 0;  // Какую пушку игрок выбрал
-
+    int activeCannonIndex = 0;      // индекс активной пушки в массиве
+    bool canShoot = true;           // Можно ли сейчас стрелять
+    bool gameOver = false;          // Закончилась ли игра
+    int winnerID = 0;               // какой игрок победитель (1 или 2)
+    bool isPlacementPhase = true;   // true - режим расстановки, false - бой начался
+    int draggedCannonIndex = -1;    // индекс пушки которую тащим мышкой
+    int selectedCannonIndex = 0;    // Какую пушку игрок выбрал
 
     // Функция поиска первой живой пушки игрока
     auto findActiveCannon = [&]() {
@@ -234,55 +452,23 @@ int main() {
         }
     };
 
-
     int half = TOTAL_CANNONS / 2;       // Половина (для разделения на команды)
+    float cannonRadius = 20.f;          // Радиус пушки
+    float startX_P1 = 150.f;            // Игрок 1: начало отступа слева
+    float startX_P2 = 750.f;            // Игрок 2: начало отступа справа
+    float stepX = 130.f;                // Расстояние между пушками
 
-
-    float cannonRadius = 20.f;      // Радиус пушки
-
-    float startX_P1 = 150.f;   // Игрок 1: начало отступа слева
-    float startX_P2 = 750.f;  // Игрок 2: начало отступа справа
-    float stepX = 130.f;       // Расстояние между пушками
-
-
-
-    //заполнение масива
+    // Заполнение массива пушек
     for (int i = 0; i < TOTAL_CANNONS; i++) {
-        cannons[i].shape.setRadius(cannonRadius);
-        cannons[i].shape.setOrigin(cannonRadius, cannonRadius); // Центр круга = его позиция
-        cannons[i].isAlive = true;  //все пушки в начале живы
-
-
-        if (i < half) {
-            // первый игрок
-            cannons[i].playerID = 1;
-            cannons[i].shape.setFillColor(sf::Color::Red);
-            // Позиция: от 50 до 250 по X
-            float startX = (i < half) ? (startX_P1 + i * stepX) : (startX_P2 + (i - half) * stepX);
-            float groundY_at_X = GetTerrainY((int)startX);
-            cannons[i].shape.setPosition(startX, groundY_at_X - cannonRadius);
-
-        }
-        else {
-            //второй игрок
-            cannons[i].playerID = 2;
-            cannons[i].shape.setFillColor(sf::Color::Blue);
-
-            // Позиция: от 550 до 750 по X (сдвиг вправо)
-            float startX = startX_P2 + (i - half) * stepX;  // Вычисляем X
-            float groundY_at_X = GetTerrainY((int)startX);  // Получаем высоту земли в этой точке
-            cannons[i].shape.setPosition(startX, groundY_at_X - cannonRadius); // Ставим на поверхность
-        }
-
-
+        float startX = (i < half) ? (startX_P1 + i * stepX) : (startX_P2 + (i - half) * stepX);
+        float groundY_at_X = terrain.getHeight(static_cast<int>(startX));
+        cannons[i].setup(startX, groundY_at_X - cannonRadius, cannonRadius, (i < half) ? 1 : 2);
     }
+
     findActiveCannon(); // Вызываем сразу при старте
-    std::cout << "Okno sozdano! Nashinaem igru..." << std::endl;
 
-
-
-
-
+    // Взрыв
+    Explosion explosion;
 
     // Главный цикл игры
     while (window.isOpen()) {
@@ -292,7 +478,7 @@ int main() {
                 window.close();
             }
 
-            //проверка на запуск
+            // Проверка на запуск боя
             if (isPlacementPhase && event.type == sf::Event::KeyPressed) {
                 if (event.key.code == sf::Keyboard::Enter || event.key.code == sf::Keyboard::Space) {
                     isPlacementPhase = false; // Переключение в режим боя
@@ -302,286 +488,163 @@ int main() {
                     gameOver = false;
                     winnerID = 0;
                     shell.isActive = false;
-                    std::cout << L" бой начался" << std::endl;
                 }
             }
+
             if (!isPlacementPhase && event.type == sf::Event::KeyPressed) {
-                if (event.type == sf::Event::KeyPressed) {
+                // Перезапуск игры через кнопку R
+                if (event.key.code == sf::Keyboard::R && gameOver) {
+                    gameOver = false; winnerID = 0; currentPlayer = 1;
+                    canShoot = true; shell.isActive = false;
+                    isPlacementPhase = true; // включение режима расстановки
+                    for (int i = 0; i < TOTAL_CANNONS; i++) cannons[i].isAlive = true;
+                    findActiveCannon();
+                }
 
+                // Управление углом
+                if (event.key.code == sf::Keyboard::Left) {
+                    cannons[activeCannonIndex].angle -= 1.f;
+                    if (cannons[activeCannonIndex].angle < 0.f) cannons[activeCannonIndex].angle = 0.f;
+                }
+                if (event.key.code == sf::Keyboard::Right) {
+                    cannons[activeCannonIndex].angle += 1.f;
+                    if (cannons[activeCannonIndex].angle > 90.f) cannons[activeCannonIndex].angle = 90.f;
+                }
 
-                    // перезапуск игры через кнопку R
-                    if (event.key.code == sf::Keyboard::R && gameOver) {
+                // Управление скоростью
+                if (event.key.code == sf::Keyboard::Up) {
+                    cannons[activeCannonIndex].velocity += 1.f;
+                    if (cannons[activeCannonIndex].velocity > 30.f) cannons[activeCannonIndex].velocity = 30.f;
+                }
+                if (event.key.code == sf::Keyboard::Down) {
+                    cannons[activeCannonIndex].velocity -= 1.f;
+                    if (cannons[activeCannonIndex].velocity < 5.f) cannons[activeCannonIndex].velocity = 5.f;
+                }
 
-                        //Сбрасываем флаги игры
-                        gameOver = false;
-                        winnerID = 0;
-                        currentPlayer = 1;
-                        canShoot = true;
-                        shell.isActive = false; // Прячем снаряд
-                        isPlacementPhase = true; //включение режима растановки
+                // Управление массой снаряда
+                if (event.key.code == sf::Keyboard::W) {
+                    cannons[activeCannonIndex].mass += 0.25f;
+                    if (cannons[activeCannonIndex].mass > 3.0f) cannons[activeCannonIndex].mass = 3.0f;
+                }
+                if (event.key.code == sf::Keyboard::S) {
+                    cannons[activeCannonIndex].mass -= 0.25f;
+                    if (cannons[activeCannonIndex].mass < 1.0f) cannons[activeCannonIndex].mass = 1.0f;
+                }
 
-                        //Оживляем все пушки
-                        for (int i = 0; i < TOTAL_CANNONS; i++) {
-                            cannons[i].isAlive = true;
-                        }
-
-                        //Находим первую активную пушку для Игрока 1
-                        findActiveCannon();
-
-                        std::cout << "Igra perezagruzlena!" << std::endl;
-                    }
-
-
-
-
-
-
-                    //Управление углом
-                    // Стрелка ВЛЕВО - уменьшить угол
-                    if (event.key.code == sf::Keyboard::Left) {
-                        currentAngle -= 2.f;
-                    }
-                    // Стрелка ВПРАВО - увеличить угол
-                    if (event.key.code == sf::Keyboard::Right) {
-                        currentAngle += 2.f;
-                    }
-                    // Ограничим угол от 0 до 90 градусов
-                    if (currentAngle < 0.f) currentAngle = 0.f;
-                    if (currentAngle > 90.f) currentAngle = 90.f;
-
-
-
-                    // управление Скоростью
-                    if (event.key.code == sf::Keyboard::Up) {
-                        currentVelocity += 1.f;  // Увеличить силу
-                    }
-                    if (event.key.code == sf::Keyboard::Down) {
-                        currentVelocity -= 1.f;  // Уменьшить силу
-                    }
-                    // Ограничения скорости (чтобы не улетал в космос или не падал)
-                    if (currentVelocity < 5.f) {
-                        currentVelocity = 5.f;
-                    }
-                    if (currentVelocity > 30.f) {
-                        currentVelocity = 30.f;
-                    }
-
-
-                    //управление массой снаряда
-                    // Нажатие W  эьо увеличить массу
-                    if (event.key.code == sf::Keyboard::W) {
-                        currentMass += 0.25f;
-                    }
-                    // Нажатие S  это уменьшить массу
-                    if (event.key.code == sf::Keyboard::S) {
-                        currentMass -= 0.25f;
-                    }
-                    // Ограничения массы (от 1.0 до 3.0)
-                    if (currentMass < 1.0f) currentMass = 1.0f;
-                    if (currentMass > 3.0f) currentMass = 3.0f;
-
-
-
-                    // Только если снаряд не летит и игра не закончена
-                    if (!shell.isActive && canShoot && !gameOver) {
-
-                        // Q - предыдущая пушка
-                        if (event.key.code == sf::Keyboard::Q) {
-                            // Ищем предыдущую живую пушку текущего игрока
-                            for (int i = selectedCannonIndex - 1; i >= 0; i--) {
-                                if (cannons[i].isAlive && cannons[i].playerID == currentPlayer) {
-                                    selectedCannonIndex = i;
-                                    break;
-                                }
+                // Переключение между пушками (Q/E)
+                if (!shell.isActive && canShoot && !gameOver) {
+                    if (event.key.code == sf::Keyboard::Q) {
+                        for (int i = selectedCannonIndex - 1; i >= 0; i--) {
+                            if (cannons[i].isAlive && cannons[i].playerID == currentPlayer) {
+                                selectedCannonIndex = i; break;
                             }
                         }
-
-                        // E - следующая пушка
-                        if (event.key.code == sf::Keyboard::E) {
-                            // Ищем следующую живую пушку текущего игрока
-                            for (int i = selectedCannonIndex + 1; i < TOTAL_CANNONS; i++) {
-                                if (cannons[i].isAlive && cannons[i].playerID == currentPlayer) {
-                                    selectedCannonIndex = i;
-                                    break;
-                                }
+                    }
+                    if (event.key.code == sf::Keyboard::E) {
+                        for (int i = selectedCannonIndex + 1; i < TOTAL_CANNONS; i++) {
+                            if (cannons[i].isAlive && cannons[i].playerID == currentPlayer) {
+                                selectedCannonIndex = i; break;
                             }
                         }
-
-                        // Обновляем активную пушку
-                        activeCannonIndex = selectedCannonIndex;
                     }
+                    activeCannonIndex = selectedCannonIndex;
+                }
 
+                // Запуск снаряда через пробел
+                if (event.key.code == sf::Keyboard::Space && !shell.isActive && canShoot && !gameOver) {
+                    float angle = cannons[activeCannonIndex].angle;
+                    float velocity = cannons[activeCannonIndex].velocity;
+                    float mass = cannons[activeCannonIndex].mass;
 
+                    shell.launch(cannons[activeCannonIndex].getCenter().x,
+                        cannons[activeCannonIndex].getCenter().y,
+                        angle, velocity, mass,
+                        cannons[activeCannonIndex].playerID);
 
-                    //запуск снаряда через пробел
-                    if (event.key.code == sf::Keyboard::Space && !shell.isActive && canShoot && !gameOver) {
-                        shell.mass = currentMass; //сохранеие массы
-                        shell.explosionRadius = shell.mass * 15.f;  // расчет радиуса поражения
-
-                        //задается размер снаряда
-                        float shellRadius = shell.mass * 8.f;   // получается 8 пикселей на единицу массы
-                        shell.shape.setRadius(shellRadius);
-                        shell.shape.setOrigin(shellRadius, shellRadius);//центр находится по центру круга
-
-
-                        //начальная позиция это центр активной пушки
-                        sf::Vector2f cannonCenter = cannons[activeCannonIndex].shape.getPosition();
-                        
-
-
-                        //расчет начальной скорости
-                        //перевод угла в радианы
-                        float angleRad = currentAngle * 3.14159f / 180.f;
-
-                        // Вычисление позиции "дула" 
-                        float muzzleDist = 40.f;  // Расстояние от центра пушки 
-                        // Игрок 1 стреляет вправо (+1), Игрок 2 влево (-1)
-                        float direction = (cannons[activeCannonIndex].playerID == 1) ? 1.f : -1.f;
-
-                        // Позиция вылета по направлению прицела
-                        float muzzleX = cannonCenter.x + cos(angleRad) * muzzleDist * direction;
-                        float muzzleY = cannonCenter.y - sin(angleRad) * muzzleDist;
-
-                        shell.shape.setPosition(muzzleX, muzzleY);
-
-                        // Разлагаем скорость на компоненты
-                        if (cannons[activeCannonIndex].playerID == 1) {
-                            // Красные стреляют ВПРАВО
-                            shell.vx = currentVelocity * cos(angleRad);
-                        }
-                        else {
-                            //Синие стреляют ВЛЕВО 
-                            shell.vx = -currentVelocity * cos(angleRad);
-                        }
-                        shell.vy = -currentVelocity * sin(angleRad);  // Минус потому что летим вверх
-
-                        shell.isActive = true; //запуск
-                        shootSound.play(); //звук выстрела
-                        canShoot = false; //запрещает стрелять пока снаряд летит
-                    }
+                    shootSound.play();
+                    shootSound.setVolume(100.f);
+                    shootSound.setPitch(0.98f + std::rand() % 5 * 0.01f);
+                    canShoot = false;
                 }
             }
         }
-        // логика Расстановки мышкой
-        if (isPlacementPhase) {
-            sf::Vector2i mousePos = sf::Mouse::getPosition(window); // Координаты мыши в окне
 
-            //Еслм нажали кнопку мыши то идет поиск какую пушку взяли
+        // Логика расстановки мышкой
+        if (isPlacementPhase) {
+            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
             if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && draggedCannonIndex == -1) {
                 for (int i = 0; i < TOTAL_CANNONS; i++) {
-                    // Центр пушки
-                    float cx = cannons[i].shape.getPosition().x;  
-                    float cy = cannons[i].shape.getPosition().y;
-                    // Расстояние до курсора
+                    float cx = cannons[i].getCenter().x;
+                    float cy = cannons[i].getCenter().y;
                     float dist = sqrt(pow(mousePos.x - cx, 2) + pow(mousePos.y - cy, 2));
-
-                    if (dist < cannonRadius + 5.f) { // +5 пикселей для удобства захвата
-                        draggedCannonIndex = i;
-                        break;
+                    if (dist < cannonRadius + 5.f) {
+                        draggedCannonIndex = i; break;
                     }
                 }
             }
-
-            // Тащим пушку
-            if (draggedCannonIndex != -1) {
-                float newX = (float)mousePos.x - cannonRadius; // Центрируем пушку под курсором
-
+            if (draggedCannonIndex != -1) { // Тащим пушку
+                float newX = (float)mousePos.x - cannonRadius;
                 //  ограничение по растановке а именно нельзя заходить дальше центра
-                if (cannons[draggedCannonIndex].playerID == 1) {
-                    // Игрок 1: только левая половина (от 50 до 590)
+                if (cannons[draggedCannonIndex].playerID == 1) {    // Игрок 1: только левая половина (от 50 до 590)
                     if (newX < 50.f) newX = 50.f;
                     if (newX > 590.f) newX = 590.f;
                 }
-                else {
-                    // Игрок 2: только правая половина (от 610 до 1150)
+                else {  // Игрок 2: только правая половина (от 610 до 1150)
                     if (newX < 610.f) newX = 610.f;
                     if (newX > 1150.f) newX = 1150.f;
                 }
-
-                // Двигаем по X и Y 
-                float terrainY = GetTerrainY((int)newX);
-                cannons[draggedCannonIndex].shape.setPosition(newX, terrainY - cannonRadius);
-
+                float terrainY = terrain.getHeight(static_cast<int>(newX));
+                cannons[draggedCannonIndex].setPosition(newX, terrainY - cannonRadius);
             }
-
-            // Отпустили кнопку мыши?
-            if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) { // Отпустили кнопку мыши?
                 draggedCannonIndex = -1;
             }
         }
 
-        // Физика полета 
+        // Физика полёта снаряда
         if (shell.isActive) {
-            // обновление позиции
-            shell.shape.move(shell.vx, shell.vy);
+            shell.update(0.15f); // Гравитация
 
-            // Применяем гравитацию 
-            shell.vy += 0.15f * shell.mass; ;  // Сила гравитации 
-
-
-            //Проверка попадания во вражеские пушки
+            // Проверка попадания во вражеские пушки
             for (int i = 0; i < TOTAL_CANNONS; i++) {
-                // Проверяем только вражеские живые пушки
                 if (cannons[i].isAlive && cannons[i].playerID != currentPlayer) {
-
-                    // Получаем центр вражеской пушки
-                    sf::Vector2f enemyPos = cannons[i].shape.getPosition();
-                    float enemyCenterX = enemyPos.x;
-                    float enemyCenterY = enemyPos.y ;
-
-                    // Получаем центр снаряда
-                    sf::Vector2f shellPos = shell.shape.getPosition();
-
-                    // Считаем расстояние между снарядом и пушкой
-                    float dx = shellPos.x - enemyCenterX;
-                    float dy = shellPos.y - enemyCenterY;
+                    sf::Vector2f enemyCenter = cannons[i].getCenter();
+                    sf::Vector2f shellCenter = shell.getCenter();
+                    float dx = shellCenter.x - enemyCenter.x;   // Считаем расстояние между снарядом и пушкой
+                    float dy = shellCenter.y - enemyCenter.y;
                     float distance = sqrt(dx * dx + dy * dy);
 
-                    //  расстояние меньше радиуса взрыва?
                     if (distance < shell.explosionRadius + cannonRadius) {
-                        cannons[i].isAlive = false;  // Уничтожаем пушку
-
-                        //создаем взрыв в центре пушки
-                        triggerExplosion(enemyCenterX, enemyCenterY, shell.explosionRadius);
-                        std::cout << "Popadanie! Vrag unichtozhen!" << std::endl;
+                        cannons[i].isAlive = false; // Уничтожаем пушку
+                        explosion.trigger(enemyCenter.x, enemyCenter.y, shell.explosionRadius, explosionSound); //создаем взрыв в центре пушки
                     }
                 }
             }
 
-
-
-
-            //  Проверка столкновений с землёй (Y >= 500)
-            int shellX = (int)shell.shape.getPosition().x;
-            if (shellX >= 0 && shellX < 1000) {
-                if (shell.shape.getPosition().y + shell.shape.getRadius() >= GetTerrainY(shellX)) {
-
-                    shell.isActive = false;  // Снаряд упал
-                    canShoot = true; //разрешаем следующему игроку стрелять
-                    std::cout << "Snaaryd upal" << std::endl;
-
-                    //  СМЕНА ХОДА 
+            // Проверка столкновений с землёй
+            int shellX = static_cast<int>(shell.getCenter().x);
+            if (shellX >= 0 && shellX < 1200) {
+                if (shell.checkGroundCollision(shellX, terrain.getHeight(shellX))) {
+                    shell.isActive = false; // Снаряд упал
+                    canShoot = true;    //разрешаем следующему игроку стрелять
                     if (!gameOver) {
-                        currentPlayer = (currentPlayer == 1) ? 2 : 1;  // Переключаем 1 на 2
-                        findActiveCannon();  // Находим новую активную пушку
-                        std::cout << "Hod igroka: " << currentPlayer << std::endl;
+                        currentPlayer = (currentPlayer == 1) ? 2 : 1;
+                        findActiveCannon(); // Находим новую активную пушку
                     }
                 }
             }
 
-            //  Проверка выхода за границы экрана 
-            if (shell.shape.getPosition().x > 1200.f || shell.shape.getPosition().x < -100.f ||
-                shell.shape.getPosition().y < -500.f) {
-                shell.isActive = false;  // Снаряд улетел за экран
-                canShoot = true;  // Разрешаем следующий ход
-
+            // Проверка выхода за границы экрана
+            if (shell.checkBoundsCollision()) {
+                shell.isActive = false;     // Снаряд улетел за экран
+                canShoot = true;    // Разрешаем следующий ход
                 if (!gameOver) {
                     currentPlayer = (currentPlayer == 1) ? 2 : 1;
                     findActiveCannon();
                 }
             }
 
-            // ПРОВЕРКА ПОБЕДЫ 
+            // Проверка победы
             int enemyAlive = 0;
             for (int i = 0; i < TOTAL_CANNONS; i++) {
                 if (cannons[i].isAlive && cannons[i].playerID != currentPlayer) {
@@ -591,185 +654,94 @@ int main() {
             if (enemyAlive == 0 && !gameOver) {
                 gameOver = true;
                 winnerID = currentPlayer;
-
-            }
-
-        }
-        // анимация взрыва
-        if (explosion.isActive) {
-            float dt = 1.0f / 30.0f; // При 60 FPS
-            explosion.lifetime -= dt;
-
-            float progress = 1.0f - (explosion.lifetime / 0.5f); // От 0 до 1
-
-            // Расширяем ядро
-            explosion.core.setRadius(explosion.core.getRadius() + 2.f);
-            sf::Color coreColor = explosion.core.getFillColor();
-            coreColor.a = 255 * (1.0f - progress); // Исчезает
-            explosion.core.setFillColor(coreColor);
-
-            // Разлетаем осколки
-            for (size_t i = 0; i < explosion.particles.size(); ++i) {
-                float angle = (360.f / explosion.particles.size()) * i + progress * 20;
-                float dist = progress * 60.f;
-                float px = explosion.core.getPosition().x + cos(angle * 3.14159f / 180.f) * dist;
-                float py = explosion.core.getPosition().y + sin(angle * 3.14159f / 180.f) * dist;
-
-                explosion.particles[i].setPosition(px, py);
-                sf::Color pColor = explosion.particles[i].getFillColor();
-                pColor.a = 255 * (1.0f - progress);
-                explosion.particles[i].setFillColor(pColor);
-            }
-
-            if (explosion.lifetime <= 0.f) {
-                explosion.isActive = false;
             }
         }
 
+        // Обновление анимации взрыва
+        explosion.update(1.0f / 60.f);
 
-        window.clear(sf::Color::Black); // Очистка экрана
-         // Рисуем землю
-        sf::VertexArray terrainVA(sf::TriangleStrip, 1200 * 2);
-        for (int i = 0; i < 1200; ++i) {
-            terrainVA[2 * i].position = sf::Vector2f((float)i, terrain[i]);
-            terrainVA[2 * i].color = sf::Color(50, 180, 50);       // Верх травы
-            terrainVA[2 * i + 1].position = sf::Vector2f((float)i, 600.f);
-            terrainVA[2 * i + 1].color = sf::Color(20, 80, 20);    // Низ земли
-        }
-        window.draw(terrainVA); // Рисуем рельеф
+        // ОТРИСОВКА
+        window.clear(sf::Color::Black);
+
+        terrain.draw(window); // Рисуем рельеф
 
         // Рисуем живые пушки
         for (int i = 0; i < TOTAL_CANNONS; i++) {
-            if (cannons[i].isAlive) {
-                if (i == activeCannonIndex && !gameOver && canShoot) {
-                    cannons[i].shape.setOutlineColor(sf::Color::White);
-                    cannons[i].shape.setOutlineThickness(4.f);
-                }
-                else {
-                    cannons[i].shape.setOutlineColor(sf::Color::Transparent);
-                    cannons[i].shape.setOutlineThickness(0.f);
-                }
-                window.draw(cannons[i].shape);
-            }
+            cannons[i].setSelected(i == activeCannonIndex && !gameOver && canShoot);
+            cannons[i].draw(window);
         }
 
-        // Обновляем позицию и поворот прицела для активной пушки 
+        // Прицел для активной пушки
         if (activeCannonIndex >= 0 && activeCannonIndex < TOTAL_CANNONS && cannons[activeCannonIndex].isAlive) {
-            // Вычисляем центр круга (левая верхняя точка + радиус)
-            aimLine.setPosition(cannons[activeCannonIndex].shape.getPosition());
-
-
+            aimLine.setPosition(cannons[activeCannonIndex].getCenter());
+            float cannonAngle = cannons[activeCannonIndex].angle;
             if (cannons[activeCannonIndex].playerID == 1) {
-                aimLine.setRotation(-currentAngle);        // Игрок 1: вправо
+                aimLine.setRotation(-cannonAngle);  // Игрок 1: вправо
             }
             else {
-                aimLine.setRotation(-180.f + currentAngle); // Игрок 2: влево
+                aimLine.setRotation(-180.f + cannonAngle);  // Игрок 2: влево
             }
-
-            window.draw(aimLine); // Рисуем прицел поверх пушек
+            window.draw(aimLine);
         }
 
-        // ОТРИСОВКА СНАРЯДА 
-        if (shell.isActive) {
-            window.draw(shell.shape);
-        }
+        // Отрисовка снаряда
+        shell.draw(window);
 
+        // Превью снаряда
         if (activeCannonIndex >= 0 && activeCannonIndex < TOTAL_CANNONS && cannons[activeCannonIndex].isAlive) {
-            // Позиция: чуть дальше конца прицела
-            sf::Vector2f cannonCenter = cannons[activeCannonIndex].shape.getPosition();
-
-            // Вычисляем точку для превью (по направлению прицела)
-            float rad = -currentAngle * 3.14159f / 180.f;
-            float previewDist = 70.f; // Дистанция от центра пушки
-
-            float direction = (cannons[activeCannonIndex].playerID == 1) ? 1.f : -1.f; //направление для игрока 1 или 2
-
+            sf::Vector2f cannonCenter = cannons[activeCannonIndex].getCenter();     // Позиция: чуть дальше конца прицела
+            float rad = -cannons[activeCannonIndex].angle * 3.14159f / 180.f;
+            float previewDist = 70.f;
+            float direction = (cannons[activeCannonIndex].playerID == 1) ? 1.f : -1.f;  //направление для игрока 1 или 2
             float previewX = cannonCenter.x + cos(rad) * previewDist * direction;
             float previewY = cannonCenter.y + sin(rad) * previewDist;
-
-            // Размер превью зависит от массы! (коэффициент 10 пикселей на единицу массы)
-            float previewRadius = currentMass * 10.f;
-
+            float previewRadius = cannons[activeCannonIndex].mass * 10.f;   // Размер превью зависит от массы! (коэффициент 10 пикселей на единицу массы)
             shellPreview.setRadius(previewRadius);
-            shellPreview.setOrigin(previewRadius, previewRadius); // Центр в центре круга
+            shellPreview.setOrigin(previewRadius, previewRadius);
             shellPreview.setPosition(previewX, previewY);
-
-            window.draw(shellPreview); // Рисуем превью
+            window.draw(shellPreview);
         }
 
-        // отрисовка взрыва
-        if (explosion.isActive) {
-            window.draw(explosion.core);
-            for (auto& p : explosion.particles) {
-                window.draw(p);
-            }
-        }
+        // Отрисовка взрыва
+        explosion.draw(window);
 
-        // Обновление текста (внутри цикла)
-        angleText.setString(L"Угол наклона: " + std::to_wstring((int)currentAngle));
-        angleText.setPosition(10.f, 10.f); // Угол экрана
-        window.draw(angleText); // Нарисовать текст
+        // Обновление текстов интерфейса
+        angleText.setString(L"Угол наклона: " + std::to_wstring((int)cannons[activeCannonIndex].angle));
+        angleText.setPosition(10.f, 10.f);
+        velocityText.setString(L"Сила выстрела: " + std::to_wstring((int)cannons[activeCannonIndex].velocity));
+        velocityText.setPosition(10.f, 40.f);
+        massText.setString(L"Масса снаряда: " + std::to_wstring(cannons[activeCannonIndex].mass));
+        massText.setPosition(10.f, 70.f);
+        window.draw(angleText);
+        window.draw(velocityText);
+        window.draw(massText);
 
-
-        //Обновление текста скорости
-        velocityText.setString(L"Сила выстрела: " + std::to_wstring((int)currentVelocity));
-        velocityText.setPosition(10.f, 40.f);  // Чуть ниже угла (по Y)
-        window.draw(velocityText);             // Нарисовать текст
-
-        //Обновление текста МАССЫ
-        massText.setString(L"Масса снаряда: " + std::to_wstring(currentMass));
-        massText.setPosition(10.f, 70.f);  // Ещё ниже (по Y)
-        window.draw(massText);             // Нарисовать текст
-
-        //  ОТРИСОВКА ПОБЕДЫ
+        // Отрисовка победы
         if (gameOver) {
-            sf::Text winText;
-            winText.setFont(font);
-            winText.setCharacterSize(40);
-            winText.setFillColor(sf::Color::Red);
-            winText.setString("GAME OVER");
-            winText.setPosition(410.f, 220.f);  // По центру экрана
-            window.draw(winText);
-
-            sf::Text winText2;
-            winText2.setFont(font);
-            winText2.setCharacterSize(40);
-            winText2.setFillColor(sf::Color::Red);
-            winText2.setString(L"Игрок " + std::to_wstring(winnerID) + L" Победил!");
-            winText2.setPosition(400.f, 270.f);  // По центру экрана
-            window.draw(winText2);
-
-
-            sf::Text restartText;
-            restartText.setFont(font);
-            restartText.setCharacterSize(20);
-            restartText.setFillColor(sf::Color::Red);
-            restartText.setString(L"Нажми R для рестрарта");
-            restartText.setPosition(410.f, 320.f); // Чуть ниже победы
-            window.draw(restartText);
+            sf::Text winText, winText2, restartText;
+            winText.setFont(font); winText.setCharacterSize(40); winText.setFillColor(sf::Color::Red);
+            winText.setString("GAME OVER"); winText.setPosition(410.f, 220.f);
+            winText2.setFont(font); winText2.setCharacterSize(40); winText2.setFillColor(sf::Color::Red);
+            winText2.setString(L"Игрок " + std::to_wstring(winnerID) + L" Победил!"); winText2.setPosition(400.f, 270.f);
+            restartText.setFont(font); restartText.setCharacterSize(20); restartText.setFillColor(sf::Color::Red);
+            restartText.setString(L"Нажми R для рестарта"); restartText.setPosition(410.f, 320.f);
+            window.draw(winText); window.draw(winText2); window.draw(restartText);
         }
+
+        // Статус игры
         sf::Text statusText;
-        statusText.setFont(font);
-        statusText.setCharacterSize(20);
-        statusText.setFillColor(sf::Color::Yellow);
-
-
-
+        statusText.setFont(font); statusText.setCharacterSize(20); statusText.setFillColor(sf::Color::Yellow);
         if (isPlacementPhase) {
             statusText.setString(L" Идет Расстановка: Перетащите пушки мышью. Нажмите ENTER для старта.");
             statusText.setPosition(190.f, 10.f);
         }
-        else if (gameOver) {
-            statusText.setString(""); // Текст победы рисуется отдельно
-        }
-        else {
-
+        else if (!gameOver) {
             statusText.setString(L" Ход Игрока " + std::to_wstring(currentPlayer));
             statusText.setPosition(400.f, 10.f);
         }
         window.draw(statusText);
 
-        window.display();               // Показываем кадр
+        window.display();
     }
 
     return 0;
