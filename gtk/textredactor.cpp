@@ -54,13 +54,9 @@ TextRedactor::~TextRedactor(){}
 void TextRedactor::setup_tags()
 {
     red_tag = text_buffer->create_tag("red");
-
-    auto color = Gdk::RGBA::create();
-    color->set_red(1.0);
-    color->set_green(0.0);
-    color->set_blue(0.0);
-    color->set_alpha(1.0);
-    red_tag->property_foreground_rgba() = *color;
+    red_tag->property_foreground() = "red";
+    red_tag->property_background() = "yellow";  // Для проверки - желтый фон
+    red_tag->property_weight() = Pango::Weight::BOLD;
 
     
 }
