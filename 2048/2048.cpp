@@ -120,6 +120,7 @@ private:
     int score;
     int bestScore;
     bool gameOver;
+    bool win;  // НОВОЕ: флаг победы
     
     void loadBestScore() {
         // Загружаем лучший счёт из файла
@@ -285,6 +286,17 @@ private:
         }
     }
     
+    bool checkWin() {  //проверка победы
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                if(cells[i][j].getValue() == 2048) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
     bool checkGameOver() {
         // Проверка «конец игры» = нет пустых клеток и нет равных соседей
         for(int i = 0; i < SIZE; i++) {
@@ -298,7 +310,7 @@ private:
     }
     
 public:
-    Board() : score(0), gameOver(false) {
+    Board() : score(0), gameOver(false), win(false) {
         // конструктор: загружаем шрифт, даём его плиткам, создаём 2 стартовые плитки
         cells.resize(SIZE, std::vector<Cell>(SIZE));
         
@@ -320,7 +332,7 @@ public:
     
     void handleMove(sf::Keyboard::Key key) {
         //функция принимает события клавиш, запускает функции перемещения и добавляет новую клетку
-        if(gameOver) return;
+        if(gameOver || win) return;  //если победа или поражение - не двигаем
         
         bool moved = false;
         switch(key) {
@@ -334,7 +346,15 @@ public:
         if(moved) {
             addRandomTile();
             updateBestScore(); // Обновляем лучший счёт
-            gameOver = checkGameOver();
+            
+            // Проверяем победу ДО проверки поражения
+            if(!win) {
+                win = checkWin();
+            }
+            
+            if(!win) {
+                gameOver = checkGameOver();
+            }
         }
     }
     
@@ -347,6 +367,7 @@ public:
         }
         score = 0;
         gameOver = false;
+        win = false;  //сбрасываем флаг победы
         addRandomTile();
         addRandomTile();
     }
@@ -387,6 +408,11 @@ public:
         return bestScore;
     }
     
+    bool isWin() { 
+        //функция возвращает true, если победа
+        return win; 
+    }
+    
     bool isGameOver() { 
         //функция возвращает true, если игра закончена
         return gameOver; 
@@ -408,6 +434,11 @@ private:
     sf::Text bestScoreText;
     sf::Text scoreLabelText;
     sf::Text bestScoreLabelText;
+    
+    //сообщения для победы/поражения
+    sf::Text winMessage;
+    sf::Text loseMessage;
+    sf::Text pressRMessage;
     
     // Элементы кнопки "Новая игра"
     sf::RectangleShape newGameButton;
@@ -470,6 +501,38 @@ private:
         bestScoreText.setFillColor(sf::Color::White);
         bestScoreText.setStyle(sf::Text::Bold);
         bestScoreText.setPosition(OFFSET + 300, OFFSET + 35);
+        
+        //сообщение о победе
+        winMessage.setFont(font);
+        winMessage.setString(L"ВЫ ПОБЕДИЛИ!");
+        winMessage.setCharacterSize(48);
+        winMessage.setFillColor(sf::Color(249, 246, 242));
+        winMessage.setStyle(sf::Text::Bold);
+        sf::FloatRect winRect = winMessage.getLocalBounds();
+        winMessage.setOrigin(winRect.left + winRect.width / 2.0f,
+                             winRect.top + winRect.height / 2.0f);
+        winMessage.setPosition(WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 2.0f - 40);
+        
+        //сообщение о поражении
+        loseMessage.setFont(font);
+        loseMessage.setString(L"ИГРА ОКОНЧЕНА!");
+        loseMessage.setCharacterSize(48);
+        loseMessage.setFillColor(sf::Color(249, 246, 242));
+        loseMessage.setStyle(sf::Text::Bold);
+        sf::FloatRect loseRect = loseMessage.getLocalBounds();
+        loseMessage.setOrigin(loseRect.left + loseRect.width / 2.0f,
+                              loseRect.top + loseRect.height / 2.0f);
+        loseMessage.setPosition(WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 2.0f - 40);
+        
+        //сообщение "Нажмите R"
+        pressRMessage.setFont(font);
+        pressRMessage.setString(L"Нажмите R для новой игры");
+        pressRMessage.setCharacterSize(22);
+        pressRMessage.setFillColor(sf::Color(238, 228, 218));
+        sf::FloatRect rRect = pressRMessage.getLocalBounds();
+        pressRMessage.setOrigin(rRect.left + rRect.width / 2.0f,
+                                rRect.top + rRect.height / 2.0f);
+        pressRMessage.setPosition(WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 2.0f + 30);
     }
     
     void updateUI() {
@@ -485,7 +548,12 @@ private:
                 window.close();
             }
             else if(event.type == sf::Event::KeyPressed) {
-                board.handleMove(event.key.code);
+                if(event.key.code == sf::Keyboard::R) {
+                    board.reset();
+                    board.updatePositions(CELL_SIZE, OFFSET);
+                } else {
+                    board.handleMove(event.key.code);
+                }
             }
             else if(event.type == sf::Event::MouseMoved) {
                 sf::Vector2i mousePos = sf::Mouse::getPosition(window);
@@ -537,6 +605,21 @@ private:
         window.draw(bestScoreText);
         
         board.draw(window);
+        
+        //сообщения о победе/поражении
+        if(board.isWin() || board.isGameOver()) {
+            // Полупрозрачный фон
+            sf::RectangleShape overlay(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
+            overlay.setFillColor(sf::Color(0, 0, 0, 180));
+            window.draw(overlay);
+            
+            if(board.isWin()) {
+                window.draw(winMessage);
+            } else if(board.isGameOver()) {
+                window.draw(loseMessage);
+            }
+            window.draw(pressRMessage);
+        }
         
         window.display();
     }
