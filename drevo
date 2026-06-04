@@ -1,0 +1,234 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+struct TreeElement
+{
+    int value;
+    TreeElement* leftChild;
+    TreeElement* rightChild;
+
+    TreeElement(int number)
+    {
+        value = number;
+        leftChild = nullptr;
+        rightChild = nullptr;
+    }
+};
+
+class BinaryTree
+{
+private:
+    TreeElement* head;
+
+    TreeElement* addElement(TreeElement* current, int number)
+    {
+        if (current == nullptr)
+        {
+            return new TreeElement(number);
+        }
+
+        if (number < current->value)
+        {
+            current->leftChild =
+                addElement(current->leftChild, number);
+        }
+        else if (number > current->value)
+        {
+            current->rightChild =
+                addElement(current->rightChild, number);
+        }
+
+        return current;
+    }
+
+    void printDirect(TreeElement* current)
+    {
+        if (current == nullptr)
+            return;
+
+        cout << current->value << " ";
+
+        printDirect(current->leftChild);
+        printDirect(current->rightChild);
+    }
+
+    void printSorted(TreeElement* current)
+    {
+        if (current == nullptr)
+            return;
+
+        printSorted(current->leftChild);
+
+        cout << current->value << " ";
+
+        printSorted(current->rightChild);
+    }
+
+    void printReverse(TreeElement* current)
+    {
+        if (current == nullptr)
+            return;
+
+        printReverse(current->leftChild);
+        printReverse(current->rightChild);
+
+        cout << current->value << " ";
+    }
+
+    void drawTree(TreeElement* current,
+                  string spacing,
+                  bool rightSide)
+    {
+        if (current == nullptr)
+            return;
+
+        cout << spacing;
+
+        if (rightSide)
+        {
+            cout << "└── ";
+            spacing += "    ";
+        }
+        else
+        {
+            cout << "├── ";
+            spacing += "│   ";
+        }
+
+        cout << current->value << endl;
+
+        drawTree(current->leftChild,
+                 spacing,
+                 false);
+
+        drawTree(current->rightChild,
+                 spacing,
+                 true);
+    }
+
+    void deleteTree(TreeElement* current)
+    {
+        if (current == nullptr)
+            return;
+
+        deleteTree(current->leftChild);
+        deleteTree(current->rightChild);
+
+        delete current;
+    }
+
+public:
+    BinaryTree()
+    {
+        head = nullptr;
+    }
+
+    ~BinaryTree()
+    {
+        deleteTree(head);
+    }
+
+    void insertNumber(int number)
+    {
+        head = addElement(head, number);
+    }
+
+    void showPreOrder()
+    {
+        printDirect(head);
+        cout << endl;
+    }
+
+    void showInOrder()
+    {
+        printSorted(head);
+        cout << endl;
+    }
+
+    void showPostOrder()
+    {
+        printReverse(head);
+        cout << endl;
+    }
+
+    void displayTree()
+    {
+        if (head == nullptr)
+        {
+            cout << "Дерево пустое.\n";
+        }
+        else
+        {
+            drawTree(head, "", true);
+        }
+    }
+};
+
+int main()
+{
+    setlocale(LC_ALL, "Russian");
+
+    BinaryTree myTree;
+
+    int menuPoint;
+    int number;
+
+    cout << "=== Работа с бинарным деревом поиска ===\n";
+
+    while (true)
+    {
+        cout << "\nМеню:\n";
+        cout << "1 - Добавить элемент\n";
+        cout << "2 - Показать дерево\n";
+        cout << "3 - Обход Pre-order\n";
+        cout << "4 - Обход In-order\n";
+        cout << "5 - Обход Post-order\n";
+        cout << "0 - Выход\n";
+        cout << "Ваш выбор: ";
+
+        cin >> menuPoint;
+
+        if (menuPoint == 1)
+        {
+            cout << "Введите число: ";
+            cin >> number;
+
+            myTree.insertNumber(number);
+
+            cout << "Элемент добавлен.\n";
+        }
+        else if (menuPoint == 2)
+        {
+            cout << "\nСтруктура дерева:\n";
+            myTree.displayTree();
+        }
+        else if (menuPoint == 3)
+        {
+            cout << "Pre-order: ";
+            myTree.showPreOrder();
+        }
+        else if (menuPoint == 4)
+        {
+            cout << "In-order: ";
+            myTree.showInOrder();
+        }
+        else if (menuPoint == 5)
+        {
+            cout << "Post-order: ";
+            myTree.showPostOrder();
+        }
+        else if (menuPoint == 0)
+        {
+            cout << "Программа завершена.\n";
+            break;
+        }
+        else
+        {
+            cout << "Неверный пункт меню.\n";
+        }
+    }
+
+    return 0;
+}
