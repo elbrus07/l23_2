@@ -333,49 +333,6 @@ sf::SoundBuffer createExplosionSound() {
     return buffer;
 }
 
-sf::SoundBuffer createShootSound() {
-    const int sampleRate = 44100;
-    const float duration = 0.6f; 
-    std::vector<sf::Int16> samples(sampleRate * duration);
-
-    for (size_t i = 0; i < samples.size(); ++i) {
-        float t = i / (float)sampleRate;
-
-        float crack = 0.f;
-        if (t < 0.015f) {
-            crack = ((std::rand() % 65536) - 32768) / 32768.f;
-            crack *= (1.0f - t / 0.015f); // Быстрое затухание
-        }
-
-        float boom1 = std::sin(t * 45.f * 2.f * 3.14159f);
-        float boom2 = std::sin(t * 90.f * 2.f * 3.14159f) * 0.5f;
-        float boom = boom1 + boom2;
-
-        float envelope;
-        if (t < 0.005f) {
-            envelope = t / 0.005f;                  // Мгновенная атака (5 мс)
-        }
-        else if (t < 0.1f) {
-            envelope = 1.0f - (t - 0.005f) / 0.095f * 0.6f; // Быстрый спад удара
-        }
-        else {
-            envelope = 0.4f * std::exp(-(t - 0.1f) * 6.f);  // Долгий хвост (раскат)
-        }
-
-        float sample = (crack * 0.85f + boom * 0.95f) * envelope * 30000.f;
-
-        if (sample > 32767.f) sample = 32767.f;
-        if (sample < -32768.f) sample = -32768.f;
-
-        samples[i] = static_cast<sf::Int16>(sample);
-    }
-
-    sf::SoundBuffer buffer;
-    buffer.loadFromSamples(samples.data(), samples.size(), 1, sampleRate);
-    return buffer;
-}
-
-
 // ГЛАВНАЯ ФУНКЦИЯ
 
 int main() {
@@ -384,7 +341,10 @@ int main() {
     window.setFramerateLimit(60); // Ограничение кадров
 
     // Звуки
-    sf::SoundBuffer shootBuffer = createShootSound();
+    sf::SoundBuffer shootBuffer;
+    if (!shootBuffer.loadFromFile("cannon_shot.wav")) {
+        std::cerr << "[AUDIO] Не удалось загрузить cannon_shot.wav. Проверьте путь и формат." << std::endl;
+    }
     sf::SoundBuffer explosionBuffer = createExplosionSound();
     sf::Sound shootSound(shootBuffer);
     sf::Sound explosionSound(explosionBuffer);
