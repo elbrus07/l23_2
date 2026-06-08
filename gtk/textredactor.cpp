@@ -13,7 +13,7 @@ TextRedactor::TextRedactor()
   save_btn("Сохранить"),
   font_btn("Шрифт"),
   highlight_enabled(true),
-  current_font_description("Sans 12")  // Шрифт по умолчанию
+  current_font_description("Sans 12")
 {
     set_title("Текстовый редактор");
     set_default_size(800, 600);
@@ -62,13 +62,6 @@ TextRedactor::TextRedactor()
         sigc::mem_fun(*this, &TextRedactor::on_font_click));
 
     setup_tags();
-    if (font_tag) {
-        font_tag->set_priority(5);  // Низкий приоритет
-    }
-    if (red_tag) {
-        red_tag->set_priority(10);  // Высокий приоритет (поверх шрифта)
-    }
-    
     text_buffer->signal_changed().connect(
         sigc::mem_fun(*this, &TextRedactor::on_buffer_changed));
         
@@ -88,7 +81,10 @@ void TextRedactor::setup_tags()
     
     // Создаем тег для шрифта
     font_tag = text_buffer->create_tag("font");
-    // Начальные настройки шрифта будут применены позже
+    
+    // Устанавливаем приоритет тегов
+    font_tag->set_priority(5);  // Низкий приоритет
+    red_tag->set_priority(10);   // Высокий приоритет (поверх шрифта)
 }
 
 void TextRedactor::apply_font(const std::string& font_desc)
@@ -124,12 +120,13 @@ void TextRedactor::apply_font(const std::string& font_desc)
         // Затем применяем новый
         text_buffer->apply_tag(font_tag, start, end);
         
-        // Для нового текста - устанавливаем шрифт по умолчанию для виджета
-        auto child = text_view.get_first_child();
-        if (child) {
-            
-            text_view.override_font(pango_font);
-        }
+        // Применяем шрифт через CSS для GTK4
+        auto provider = Gtk::CssProvider::create();
+        std::string css = "textview { font: " + font_desc + "; }";
+        provider->load_from_data(css);
+        
+        auto style_context = text_view.get_style_context();
+        style_context->add_provider(provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
         
     } catch (const std::exception& e) {
         std::cerr << "Ошибка применения шрифта: " << e.what() << std::endl;
