@@ -301,57 +301,57 @@ void TextRedactor::open_click()
 
 void TextRedactor::save_click()
 {
-    if(current_file.empty())
-    {
-        auto dialog = new Gtk::FileChooserDialog(
-            "Сохранить файл",
-            Gtk::FileChooser::Action::SAVE
-        );
+    auto dialog = new Gtk::FileChooserDialog(
+        "Сохранить файл",
+        Gtk::FileChooser::Action::SAVE
+    );
 
-        dialog->set_transient_for(*this);
-
+    dialog->set_transient_for(*this);
+    
+    // Устанавливаем предложенное имя файла
+    if (!current_file.empty() && current_file != "новый_файл.txt") {
+        // Если открыт существующий файл, предлагаем сохранить в ту же папку
+        dialog->set_current_folder(Glib::path_get_dirname(current_file));
+        dialog->set_current_name(Glib::path_get_basename(current_file));
+    } else {
+        // Для нового файла предлагаем имя по умолчанию
         dialog->set_current_name("документ.txt");
+    }
 
-        dialog->add_button(
-            "_Отмена",
-            Gtk::ResponseType::CANCEL
-        );
+    dialog->add_button(
+        "_Отмена",
+        Gtk::ResponseType::CANCEL
+    );
 
-        dialog->add_button(
-            "_Сохранить",
-            Gtk::ResponseType::ACCEPT
-        );
+    dialog->add_button(
+        "_Сохранить",
+        Gtk::ResponseType::ACCEPT
+    );
 
-        dialog->signal_response().connect(
-            [this, dialog](int response_id)
+    dialog->signal_response().connect(
+        [this, dialog](int response_id)
+        {
+            if(response_id == Gtk::ResponseType::ACCEPT)
             {
-                if(response_id == Gtk::ResponseType::ACCEPT)
+                auto file = dialog->get_file();
+
+                if(file)
                 {
-                    auto file = dialog->get_file();
+                    current_file = file->get_path();
+                    save_file(current_file);
 
-                    if(file)
-                    {
-                        current_file = file->get_path();
-
-                        save_file(current_file);
-
-                        set_title(
-                            "Текстовый редактор - " +
-                            Glib::path_get_basename(current_file)
-                        );
-                    }
+                    set_title(
+                        "Текстовый редактор - " +
+                        Glib::path_get_basename(current_file)
+                    );
                 }
-
-                delete dialog;
             }
-        );
 
-        dialog->show();
-    }
-    else
-    {
-        save_file(current_file);
-    }
+            delete dialog;
+        }
+    );
+
+    dialog->show();
 }
 
 void TextRedactor::load_file(const std::string& path)
