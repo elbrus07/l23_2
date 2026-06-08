@@ -308,13 +308,10 @@ void TextRedactor::save_click()
 
     dialog->set_transient_for(*this);
     
-    // Устанавливаем предложенное имя файла
+    // Просто устанавливаем имя файла по умолчанию
     if (!current_file.empty() && current_file != "новый_файл.txt") {
-        // Если открыт существующий файл, предлагаем сохранить в ту же папку
-        dialog->set_current_folder(Glib::path_get_dirname(current_file));
         dialog->set_current_name(Glib::path_get_basename(current_file));
     } else {
-        // Для нового файла предлагаем имя по умолчанию
         dialog->set_current_name("документ.txt");
     }
 
